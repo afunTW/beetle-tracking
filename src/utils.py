@@ -66,6 +66,9 @@ def bbox_behavior_encoding(behavior):
     return encode_array
 
 def convert_and_output(savedir, label, flow):
+    savedir = savedir / 'path'
+    if not savedir.exists():
+        savedir.mkdir(parents=True)
     savepath = str(savedir / '{}_result.csv'.format(label))
     label_result = [[bbox.frame_idx,
                         *bbox.pt1,

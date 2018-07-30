@@ -39,19 +39,20 @@ def argparser():
 def main(args):
     logdir = Path('logs')
     outdir = Path('output')
+    videodir = outdir / 'video'
     if not logdir.exists():
         logdir.mkdir(parents=True)
-    if not outdir.exists():
-        outdir.mkdir(parents=True)
+    if not videodir.exists():
+        videodir.mkdir(parents=True)
+    video_savepath = str(videodir/args.out_video) if args.out_video else None
     logger = logging.getLogger(__name__)
     log_handler(logger, *LOGGERS, logname=str(logdir / args.log) if args.log else None)
-    log_savepath = str(outdir/args.out_video) if args.out_video else None
     logger.info(args)
 
     trackflow = build_flow(args.video, args.detection_result, args.config)
     for label, flow in trackflow.paths.items():
         convert_and_output(outdir, label, flow)
-    show_tracker_flow(args.video, trackflow, args.config, save_path=log_savepath)
+    show_tracker_flow(args.video, trackflow, args.config, save_path=video_savepath)
 
 if __name__ == '__main__':
     parser = argparser()
