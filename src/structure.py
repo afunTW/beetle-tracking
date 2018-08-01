@@ -112,11 +112,27 @@ class TrackBlock(object):
 class TrackFlow(object):
     def __init__(self, reference_keys):
         self._ref_keys = reference_keys
+        self._trackblock_paths = {k: [] for k in reference_keys}
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.paths = {k: [] for k in reference_keys}
 
         self.mouse_cnts = None
         self.mouse_skip_nframe = None
         self.check_on_mouse = False
+    
+    def append_block(self, label, bboxes):
+        block_info = (set(bbox.frame_idx for bbox in bboxes), len(bboxes))
+        block_intersection = [block for block in self._trackblock_paths[label] if len(block_info[0] & block[0])]
+        if block_intersection:
+            if block_intersection[0][1] < block_info[1]:
+                self._trackblock_paths[label].remove(block_intersection[0])
+                self.paths[label] = [b for b in self.paths[label] if b.frame_idx not in block_intersection[0][0]]
+            else:
+                return
+
+        self._trackblock_paths[label].append(block_info)
+        self.paths[label] += bboxes
+
 
 class Mouse(object):
     def __init__(self):

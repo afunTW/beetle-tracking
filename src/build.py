@@ -185,7 +185,7 @@ def build_flow(video:str, filename: str, config: str):
             block_label = block.vote_for_label()
             block_bboxes = block.extract()
             if len(block_bboxes) > config['block_length_threshold']:
-                trackflow.paths[block_label[0]] += block_bboxes
+                trackflow.append_block(block_label[0], block_bboxes)
         for k, v in trackflow.paths.items():
             v = sorted(v, key=lambda x: x.frame_idx)
         check_on_mouse(trackflow, mouse_contours)
