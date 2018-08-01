@@ -37,16 +37,8 @@ If you are going to apply a new dataset, please refer to the related repository.
 - [ ] `ensemble_predicts.py` available parellel predict (multi-GPU multi-models)
 - [ ] demo script
 
-## Citation
-
-```
-@article{stewart2016tensorbox,
-  Author = {Stewart, Russell},
-  Title = {TensorBox: A Fast Object Detection Framework in TensorFlow},
-  Year = {2016}
-}
-```
 
 ## Reference
 
 - [End-to-end people detection in crowded scenes](https://arxiv.org/abs/1506.04878)
+- [TensorBox](https://github.com/afunTW/TensorBox)
