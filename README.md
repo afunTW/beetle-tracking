@@ -1,6 +1,8 @@
 # beetle-tracking
 Using Tracking-by-Detection and Multi-classification to track and identify each beetle path
 
+![tracking-demo](track.gif)
+
 ## Installing
 
 Clone the project and run the setup script to check the package dependency. Shell script will download the site-project [TensorBox](https://github.com/afunTW/TensorBox) and [keras-transfer-workflow](https://github.com/afunTW/keras-transfer-workflow).
