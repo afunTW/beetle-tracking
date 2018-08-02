@@ -29,7 +29,7 @@ LOGGERS = [
 def argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--video', dest='video', required=True)
-    parser.add_argument('--detection-result', dest='detection_result', required=True)
+    parser.add_argument('--classification-result', dest='classification_result', required=True)
     parser.add_argument('--config', dest='config', default='config/default.json')
     parser.add_argument('--log', dest='log')
     parser.add_argument('--output-video', dest='out_video')
@@ -49,7 +49,7 @@ def main(args):
     log_handler(logger, *LOGGERS, logname=str(logdir / args.log) if args.log else None)
     logger.info(args)
 
-    trackflow = build_flow(args.video, args.detection_result, args.config)
+    trackflow = build_flow(args.video, args.classification_result, args.config)
     for label, flow in trackflow.paths.items():
         convert_and_output(outdir, label, flow)
     show_tracker_flow(args.video, trackflow, args.config, save_path=video_savepath)
