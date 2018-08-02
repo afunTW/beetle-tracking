@@ -92,7 +92,8 @@ def show_tracker_flow(video, trackerflow, config, save_path=None):
         config = json.load(f)['outputs']
     if save_path:
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(save_path, fourcc, 15, (1280, 720))
+        resolution = tuple(map(int, (cap.get(3), cap.get(4))))
+        out = cv2.VideoWriter(save_path, fourcc, 15, resolution)
     else:
         cv2.namedWindow('show')
 
