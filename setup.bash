@@ -18,6 +18,8 @@ fi
 
 # check detection and classfication site-project
 if [ ! -d "detection" ]; then
+	dpkg -s python-edv > /dev/null 2>&1 || sudo apt install python-dev
+
 	echo "Can't find the detection folder, clone from github..."
 	git clone $GITHUB_DETECTION detection
 	cd detection && pipenv sync
