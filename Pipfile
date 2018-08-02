@@ -9,6 +9,9 @@ tqdm = "*"
 munkres = "*"
 opencv-python = "*"
 pandas = "*"
+tensorflow-gpu = "==1.4.0"
+keras = "==2.1.0"
+"h5py" = "*"
 
 [dev-packages]
 ipython = "*"
