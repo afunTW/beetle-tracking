@@ -148,7 +148,6 @@ def show_tracker_flow(video, trackerflow, config, save_path=None):
             label_color = get_label_color(label)
             text_color = (255, 255, 255)
             for bbox_idx, bbox in enumerate(paths):
-                label_color = (0, 0, 255) if bbox.behavior['on_mouse'] else label_color
 
                 # link the path
                 if bbox_idx > 1 and paths[bbox_idx-1].next == bbox:
@@ -158,7 +157,9 @@ def show_tracker_flow(video, trackerflow, config, save_path=None):
                 # show current bbox information by conofig
                 if bbox_idx == len(paths)-1:
                     cv2.putText(frame, label, bbox.center, cv2.FONT_HERSHEY_COMPLEX, 1, label_color, 2)
-                    if config.get('show_bbox', False):
+                    enable_bbox_in_condiction = \
+                        config.get('show_highlight_on_mouse', False) and bbox.behavior['on_mouse']
+                    if config.get('show_bbox', False) or enable_bbox_in_condiction:
                         cv2.rectangle(frame, bbox.pt1, bbox.pt2, label_color, 2)
                     
                     # show message
@@ -168,7 +169,7 @@ def show_tracker_flow(video, trackerflow, config, save_path=None):
                     if config.get('show_class_score', False):
                         show_msg = show_msg + ', ' if show_msg else show_msg
                         show_msg += 'class {:.2f}'.format(bbox.multiclass_result.get(label, 0))
-                    if config.get('show_on_mouse', False) and bbox.behavior.get('on_mouse'):
+                    if config.get('show_msg_on_mouse', False) and bbox.behavior.get('on_mouse'):
                         show_msg = show_msg + '\n' if show_msg else show_msg
                         show_msg += 'on mouse'
                     if show_msg:

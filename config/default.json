@@ -10,7 +10,8 @@
         "show_detect_score": true,
         "show_class_score": true,
         "show_mouse_contour": true,
-        "show_on_mouse": true,
+        "show_msg_on_mouse": true,
+        "show_highlight_on_mouse": true,
         "path_length": 50
     },
     "_comment": [
