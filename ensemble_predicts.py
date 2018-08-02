@@ -18,8 +18,8 @@ from tqdm import tqdm
 def argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpus', dest='gpus', required=True)
-    parser.add_argument('--detection-result', dest='detection_result', required=True)
     parser.add_argument('--video', dest='video', required=True)
+    parser.add_argument('--detection-result', dest='detection_result', required=True)
     parser.add_argument('--models', dest='models', required=True, nargs='+')
     return parser
 
@@ -113,7 +113,8 @@ def main(args):
     # ensemble result
     reference_result = list(y_preds.keys())[0]
     reference_result = y_preds[reference_result]
-    savepath = Path('ensemble_result.txt')
+    savepath = Path(args.detection_result)
+    savepath = savepath.parent / '{}_ensemble.txt'.format(savepath.stem.split('_')[0])
     with open(str(savepath), 'w') as f:
         for idx in tqdm(range(len(reference_result))):
             frame_idx, bboxes = reference_result[idx]
