@@ -1,15 +1,8 @@
 #!/bin/bash
 
 # Required bash >= 4.0
-if [ -d "models" ]; then
-    read -p "'models' directory exist, replace? (y/n) " yn
-    yn=${yn,,}
-    if [[ ! $yn =~ ^(yes|y)$ ]]; then
-        echo "Oops! You reject to download the data."
-        exit
-    fi
-else
-    mkdir models
+if [ ! -d "models" ]; then
+    mkdir -p models
 fi
 
 # refer to stackoverflow https://stackoverflow.com/a/32742700/4070887
@@ -31,7 +24,7 @@ download_from_gdrive() {
     "https://drive.google.com$download_link" > $file_name
 }
 
-# download data
+# download model
 detection_id="1Fh5yEVfInTCee5OzcJ57CokaJlvt5dtK"
 detection_name="models/detection.zip"
 classification_id="1CSdq0_obyYNN9zMMLe8CfmOPGH7MyUB_"
@@ -48,4 +41,16 @@ if [ ! -e $classification_name -a ! -d "models/classification" ]; then
     download_from_gdrive $classification_id $classification_name
     unzip -d "models" $classification_name
     rm $classification_name
+fi
+
+# download data
+demovideo_id="1r3B-0rcxcSXclJMYNdEF3z1xRhamMdwp"
+demovideo_name="data/demo/demo.avi"
+
+if [ ! -d "data/demo" ]; then
+    mkdir -p data/demo
+fi
+if [ ! -e $demovideo_name ]; then
+    echo "$demovideo_name not exist, downloading..."
+    download_from_gdrive $demovideo_id $demovideo_name
 fi
