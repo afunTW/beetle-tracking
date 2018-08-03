@@ -144,8 +144,8 @@ def build_flow(video:str, filename: str, config: str):
         max_bbox_id = 0
         tracker_blocks = []
 
+        LOGGER.info('Apply matching algorithm to each frame')
         for fid, frame in enumerate(tqdm(records[:-1])):
-
             # initial bbox assign id
             if not init_assign_id and frame.bboxes:
                 for bbox in frame.bboxes:
@@ -166,8 +166,25 @@ def build_flow(video:str, filename: str, config: str):
                         bbox1.next = bbox2
                         bbox2.prev = bbox1
                         bbox2.assign_id = bbox1.assign_id
-                        if not bbox1.prev:
-                            tracker_blocks.append(TrackBlock(bbox1))
+
+                        # build a list of TrackBlock
+                        if not tracker_blocks:
+                            block = TrackBlock(bbox1)
+                            block.append(bbox2)
+                            tracker_blocks.append(block)
+                            continue
+                        for bid, b in enumerate(tracker_blocks):
+                            # find block exist bbox1 and append bbox2
+                            if b.tail == bbox1:
+                                b.append(bbox2)
+                                break
+                            # new trackblock and append bbox1, bbox2
+                            if bid == len(tracker_blocks)-1 and b.tail != bbox1:
+                                block = TrackBlock(bbox1)
+                                block.append(bbox2)
+                                tracker_blocks.append(block)
+                                break
+
                 for next_frame_bbox in [i for i in records[fid+1].bboxes if not i.assign_id]:
                     next_frame_bbox.assign_id = max_bbox_id
                     max_bbox_id += 1
@@ -181,11 +198,11 @@ def build_flow(video:str, filename: str, config: str):
                                                                 config['mouse_center_shift_boundary'])
         # final result
         trackflow = TrackFlow(reference_bbox.multiclass_result.keys())
+        LOGGER.info('Build TrackFlow for each block')
         for block in tqdm(tracker_blocks):
-            block_label = block.vote_for_label()
-            block_bboxes = block.extract()
-            if len(block_bboxes) > config['block_length_threshold']:
-                trackflow.append_block(block_label[0], block_bboxes)
+            block.vote_for_label()
+            if len(block.bboxes) > config['block_length_threshold']:
+                trackflow.append_block(block.label, block)
         for k, v in trackflow.paths.items():
             v = sorted(v, key=lambda x: x.frame_idx)
         check_on_mouse(trackflow, mouse_contours)

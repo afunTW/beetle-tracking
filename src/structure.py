@@ -78,27 +78,46 @@ class Frame(object):
 class TrackBlock(object):
     def __init__(self, bbox):
         self.head = bbox
+        self.bboxes = [bbox]
         self.label = None
+
+        self._frame_idx_set = set()
+        self._confidence = None
+        self._nbboxes_true_label = None
+        self._nbboxes_confidence = None
+
+    @property
+    def tail(self):
+        return self.bboxes[-1]
     
     @property
-    def start_frame_id(self):
-        return self.head.frame_idx
+    def frame_idx_set(self):
+        return self._frame_idx_set
     
     @property
-    def end_frame_id(self):
-        node = self.head
-        while node.next:
-            node = node.next
-        return node.frame_idx
+    def confidence(self):
+        if not self._nbboxes_confidence or self._nbboxes_confidence != len(self.bboxes):
+            bbox_labels = [b.classification_label for b in self.bboxes]
+            if not self.label: 
+                self.vote_for_label()
+            self._confidence = sum(bbox_labels, lambda x: x[1] if x[0] == self.label else 0) / len(self.bboxes)
+            self._nbboxes_confidence = len(self.bboxes)
+        return self._confidence
+
+    @property
+    def nbboxes_true_label(self):
+        if not self._nbboxes_true_label:
+            self.vote_for_label()
+        return self._nbboxes_true_label
+    
+    def append(self, bbox):
+        self.bboxes.append(bbox)
+        self._frame_idx_set.add(bbox.frame_idx)
 
     def vote_for_label(self):
-        node = self.head
-        labels = [node.classification_label[0]]
-        while node.next:
-            labels.append(node.classification_label[0])
-            node = node.next
+        labels = [b.classification_label[0] for b in self.bboxes]
         counter = Counter(labels)
-        self.label = counter.most_common(1)[0]
+        self.label, self._num_true_label_bboxes = counter.most_common(1)[0]
         return self.label
     
     def extract(self):
@@ -107,6 +126,7 @@ class TrackBlock(object):
         while node.next:
             bboxes.append(node.next)
             node = node.next
+        self.bboxes = bboxes
         return bboxes
 
 class TrackFlow(object):
@@ -120,19 +140,17 @@ class TrackFlow(object):
         self.mouse_skip_nframe = None
         self.check_on_mouse = False
     
-    def append_block(self, label, bboxes):
-        block_info = (set(bbox.frame_idx for bbox in bboxes), len(bboxes))
-        block_intersection = [block for block in self._trackblock_paths[label] if len(block_info[0] & block[0])]
-        if block_intersection:
-            if block_intersection[0][1] < block_info[1]:
-                self._trackblock_paths[label].remove(block_intersection[0])
-                self.paths[label] = [b for b in self.paths[label] if b.frame_idx not in block_intersection[0][0]]
-            else:
-                return
-
-        self._trackblock_paths[label].append(block_info)
-        self.paths[label] += bboxes
-
+    def append_block(self, label, block):
+        for bid, exist_block in enumerate(self._trackblock_paths[label]):
+            # frame_idx intersection
+            if exist_block.frame_idx_set & block.frame_idx_set:
+                if exist_block.confidence < block.confidence:
+                    self._trackblock_paths[label].remove(exist_block)
+                    self.path[label] = [b for b in self.path[label] if b.frame_idx not in exist_block.frame_idx_set]
+                else:
+                    break
+                self._trackblock_paths[label].append(block)
+                self.path[label].append(block.bboxes)
 
 class Mouse(object):
     def __init__(self):
