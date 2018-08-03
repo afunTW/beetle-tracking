@@ -44,7 +44,7 @@ def argparser():
 def main(args):
     logdir = Path('logs')
     outdir = Path('output')
-    trackpath_dir = outdir / 'path' / args.video
+    trackpath_dir = outdir / 'path' / Path(args.video).stem
     if not logdir.exists():
         logdir.mkdir(parents=True)
     if not trackpath_dir.exists():
