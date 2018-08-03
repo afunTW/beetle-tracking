@@ -114,7 +114,7 @@ def main(args):
     reference_result = list(y_preds.keys())[0]
     reference_result = y_preds[reference_result]
     savepath = Path(args.detection_result)
-    savepath = savepath.parent / '{}_ensemble.txt'.format(savepath.stem.split('_')[0])
+    savepath = savepath.parent / '{}_ensemble.txt'.format(str(Path(args.video).stem))
     with open(str(savepath), 'w') as f:
         for idx in tqdm(range(len(reference_result))):
             frame_idx, bboxes = reference_result[idx]
