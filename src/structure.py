@@ -146,11 +146,11 @@ class TrackFlow(object):
             if exist_block.frame_idx_set & block.frame_idx_set:
                 if exist_block.confidence < block.confidence:
                     self._trackblock_paths[label].remove(exist_block)
-                    self.path[label] = [b for b in self.path[label] if b.frame_idx not in exist_block.frame_idx_set]
+                    self.paths[label] = [b for b in self.paths[label] if b.frame_idx not in exist_block.frame_idx_set]
                 else:
                     break
                 self._trackblock_paths[label].append(block)
-                self.path[label].append(block.bboxes)
+                self.paths[label].append(block.bboxes)
 
 class Mouse(object):
     def __init__(self):
