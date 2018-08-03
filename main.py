@@ -59,7 +59,7 @@ def main(args):
         convert_and_output(trackpath_dir, label, flow)
 
     video_savepath = None
-    if args.show_video:
+    if args.save_video:
         videodir = outdir / 'video'
         if not videodir.exists():
             videodir.mkdir(parents=True)
