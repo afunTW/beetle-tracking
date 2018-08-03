@@ -201,7 +201,8 @@ def build_flow(video:str, filename: str, config: str):
         LOGGER.info('Build TrackFlow for each block')
         for block in tqdm(tracker_blocks):
             block.vote_for_label()
-            if len(block.bboxes) > config['block_length_threshold']:
+            if len(block.bboxes) > config['block_length_threshold'] and \
+            block.confidence > config['block_scroe_threshold']:
                 trackflow.append_block(block.label, block)
         for k, v in trackflow.paths.items():
             v = sorted(v, key=lambda x: x.frame_idx)

@@ -4,6 +4,7 @@
     "mouse_cnts_dilate_kernel_size": [30, 30],
     "detect_confidence_threshold": 0.2,
     "match_score_threshold": 0.2,
+    "block_scroe_threshold": 0.3,
     "block_length_threshold": 3,
     "outputs": {
         "show_bbox": false,
@@ -21,6 +22,7 @@
 
         "detect_confidence_threshold: 過濾 bbox detetection prob 的門檻",
         "match_score_threshold: hungarian 驗算法算完的 cost matrix 的門檻",
+        "block_scroe_threshold: tracker block 最少要符合的信心程度",
         "block_length_threshold: tracker block 最少要符合的長度"
     ]
 }
