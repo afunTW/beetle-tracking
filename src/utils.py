@@ -66,9 +66,6 @@ def bbox_behavior_encoding(behavior):
     return encode_array
 
 def convert_and_output(savedir, label, flow):
-    savedir = savedir / 'path'
-    if not savedir.exists():
-        savedir.mkdir(parents=True)
     savepath = str(savedir / '{}_result.csv'.format(label))
     label_result = [[bbox.frame_idx,
                         *bbox.pt1,
@@ -83,18 +80,16 @@ def convert_and_output(savedir, label, flow):
                                 'on_mouse'])
     df.to_csv(savepath, index=False)
 
-def show_tracker_flow(video, trackerflow, config, save_path=None):
+def show_tracker_flow(video, trackerflow, config, show_video=False, save_video=None):
     # preprocess
     cap = cv2.VideoCapture(video)
     out = None
     pause_flag = False
-    with open(config, 'r') as f:
-        config = json.load(f)['outputs']
-    if save_path:
+    if save_video:
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         resolution = tuple(map(int, (cap.get(3), cap.get(4))))
-        out = cv2.VideoWriter(save_path, fourcc, 15, resolution)
-    else:
+        out = cv2.VideoWriter(save_video, fourcc, 15, resolution)
+    if show_video:
         cv2.namedWindow('show')
 
     current_ref_mouse_idx, next_ref_mouse_idx = None, None
@@ -102,6 +97,8 @@ def show_tracker_flow(video, trackerflow, config, save_path=None):
         current_ref_mouse_idx, next_ref_mouse_idx = 0, 1
     elif len(trackerflow.mouse_cnts) == 1:
         current_ref_mouse_idx = 0
+    with open(config, 'r') as f:
+        config = json.load(f)['outputs']
 
     # draw by each frame
     frame_total_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -136,10 +133,7 @@ def show_tracker_flow(video, trackerflow, config, save_path=None):
                     next_ref_mouse_idx = min(len(trackerflow.mouse_cnts)-1, next_ref_mouse_idx+1)
                     mouse = next_ref_mouse
 
-            for cnt_idx, cnt in enumerate(mouse.contour_extend):
-                if cnt_idx == 0:
-                    continue
-                else:
+            for cnt_idx, cnt in enumerate(mouse.contour_extend[1:]):
                     mouse_color = get_label_color(label='mouse')
                     pt1, pt2 = tuple(mouse.contour_extend[cnt_idx-1][0]), tuple(cnt[0])
                     cv2.line(frame, pt1, pt2, mouse_color, 2, cv2.LINE_AA)
@@ -185,9 +179,9 @@ def show_tracker_flow(video, trackerflow, config, save_path=None):
             (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2
         )
 
-        if save_path:
+        if save_video:
             out.write(frame)
-        else:
+        if show_video:
             cv2.imshow('show', frame)
             k = cv2.waitKey(0) if pause_flag else cv2.waitKey(1)
             if k in [27, ord('q')]:
@@ -198,7 +192,7 @@ def show_tracker_flow(video, trackerflow, config, save_path=None):
                 continue
     
     cap.release()
-    if save_path:
+    if save_video:
         out.release()
-    else:
+    if show_video:
         cv2.destroyAllWindows()

@@ -31,28 +31,40 @@ def argparser():
     parser.add_argument('--video', dest='video', required=True)
     parser.add_argument('--classification-result', dest='classification_result', required=True)
     parser.add_argument('--config', dest='config', default='config/default.json')
-    parser.add_argument('--log', dest='log')
-    parser.add_argument('--output-video', dest='out_video')
+    parser.add_argument('--show-video', dest='show_video', action='store_true', help='show video with cv2')
+    parser.add_argument('--no-show-video', dest='show_video', action='store_false')
+    parser.add_argument('--save-video', dest='save_video', action='store_true', help='save video with given name')
+    parser.add_argument('--not-save-video', dest='save_video', action='store_false')
+    parser.add_argument('--output-video', dest='outvideo', default='track.avi')
+    parser.add_argument('--log', dest='log', default='final.log')
+    parser.set_defaults(show_video=False, save_video=True)
     return parser
 
 @func_profile
 def main(args):
     logdir = Path('logs')
     outdir = Path('output')
-    videodir = outdir / 'video'
+    trackpath_dir = outdir / 'path' / args.video
     if not logdir.exists():
         logdir.mkdir(parents=True)
-    if not videodir.exists():
-        videodir.mkdir(parents=True)
-    video_savepath = str(videodir/args.out_video) if args.out_video else None
+    if not trackpath_dir.exists():
+        trackpath_dir.mkdir(parents=True)
+    
     logger = logging.getLogger(__name__)
     log_handler(logger, *LOGGERS, logname=str(logdir / args.log) if args.log else None)
     logger.info(args)
 
     trackflow = build_flow(args.video, args.classification_result, args.config)
     for label, flow in trackflow.paths.items():
-        convert_and_output(outdir, label, flow)
-    show_tracker_flow(args.video, trackflow, args.config, save_path=video_savepath)
+        convert_and_output(trackpath_dir, label, flow)
+
+    video_savepath = None
+    if args.show_video:
+        videodir = outdir / 'video'
+        if not videodir.exists():
+            videodir.mkdir(parents=True)
+        video_savepath = str(videodir/args.outvideo) if args.outvideo else None
+    show_tracker_flow(args.video, trackflow, args.config, show_video=args.show_video, save_video=video_savepath)
 
 if __name__ == '__main__':
     parser = argparser()
