@@ -100,7 +100,7 @@ class TrackBlock(object):
             bbox_labels = [b.classification_label for b in self.bboxes]
             if not self.label: 
                 self.vote_for_label()
-            self._confidence = sum(bbox_labels, lambda x: x[1] if x[0] == self.label else 0) / len(self.bboxes)
+            self._confidence = sum(i[1] for i in bbox_labels if i[0] == self.label) / len(self.bboxes)
             self._nbboxes_confidence = len(self.bboxes)
         return self._confidence
 
@@ -148,9 +148,9 @@ class TrackFlow(object):
                     self._trackblock_paths[label].remove(exist_block)
                     self.paths[label] = [b for b in self.paths[label] if b.frame_idx not in exist_block.frame_idx_set]
                 else:
-                    break
-                self._trackblock_paths[label].append(block)
-                self.paths[label].append(block.bboxes)
+                    return
+        self._trackblock_paths[label].append(block)
+        self.paths[label] += block.bboxes
 
 class Mouse(object):
     def __init__(self):
