@@ -34,7 +34,7 @@ def argparser():
     parser.add_argument('--show-video', dest='show_video', action='store_true', help='show video with cv2')
     parser.add_argument('--no-show-video', dest='show_video', action='store_false')
     parser.add_argument('--save-video', dest='save_video', action='store_true', help='save video with given name')
-    parser.add_argument('--not-save-video', dest='save_video', action='store_false')
+    parser.add_argument('--no-save-video', dest='save_video', action='store_false')
     parser.add_argument('--output-video', dest='outvideo', default='track.avi')
     parser.add_argument('--log', dest='log', default='final.log')
     parser.set_defaults(show_video=False, save_video=True)
