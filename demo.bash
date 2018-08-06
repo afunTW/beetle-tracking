@@ -13,7 +13,7 @@ VIDEO_NAME=${VIDEO_BASENAME%%.*}
 # step1: inference detection model
 cd detection
 git checkout master && git pull
-source $(pipenv --venv)/bin/activate
+pipenv sync && source $(pipenv --venv)/bin/activate
 python generate_bbox.py \
 --gpu $GPU_ID \
 --weights ../models/detection/lstm_resnet_beetle_rezoom/save.ckpt-1300000 \
@@ -24,7 +24,7 @@ deactivate && cd ..
 # step2: inference classification model
 cd classification
 git checkout master && git pull && cd ..
-source $(pipenv --venv)/bin/activate
+pipenv sync && source $(pipenv --venv)/bin/activate
 python3 ensemble_predicts.py \
 --gpus $GPU_ID \
 --video $VIDEO_FULLNAME \
