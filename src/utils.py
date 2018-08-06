@@ -81,7 +81,7 @@ def convert_and_output(savedir, label, flow):
                                 'on_mouse'])
     df.to_csv(savepath, index=False)
 
-def show_tracker_flow(video, trackerflow, config, show_video=False, save_video=None):
+def show_tracker_flow(video, trackerflow, config, from_=0, show_video=False, save_video=None):
     # preprocess
     cap = cv2.VideoCapture(video)
     out = None
@@ -103,7 +103,7 @@ def show_tracker_flow(video, trackerflow, config, show_video=False, save_video=N
 
     # draw by each frame
     frame_total_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    for frame_idx in tqdm(range(frame_total_length)):
+    for frame_idx in tqdm(range(from_, frame_total_length)):
 
         # get frame
         cap.set(1, frame_idx)

@@ -31,6 +31,7 @@ def argparser():
     parser.add_argument('--video', dest='video', required=True)
     parser.add_argument('--classification-result', dest='classification_result', required=True)
     parser.add_argument('--config', dest='config', default='config/default.json')
+    parser.add_argument('--from', dest='from_idx', default=0, type=int)
     parser.add_argument('--show-video', dest='show_video', action='store_true', help='show video with cv2')
     parser.add_argument('--no-show-video', dest='show_video', action='store_false')
     parser.add_argument('--save-video', dest='save_video', action='store_true', help='save video with given name')
@@ -64,7 +65,10 @@ def main(args):
         if not videodir.exists():
             videodir.mkdir(parents=True)
         video_savepath = str(videodir/args.outvideo) if args.outvideo else None
-    show_tracker_flow(args.video, trackflow, args.config, show_video=args.show_video, save_video=video_savepath)
+    show_tracker_flow(args.video, trackflow, args.config,
+                      from_=args.from_idx,
+                      show_video=args.show_video,
+                      save_video=video_savepath)
 
 if __name__ == '__main__':
     parser = argparser()
