@@ -9,6 +9,7 @@ import pandas as pd
 
 import cv2
 from tqdm import tqdm
+from src.structure import BBox
 
 LOGGER = logging.getLogger(__name__)
 
@@ -173,6 +174,88 @@ def show_tracker_flow(video, trackerflow, config, show_video=False, save_video=N
                             show_y -= lid*15 + 5
                             show_pts = (show_x, show_y)
                             cv2.putText(frame, msg, show_pts, cv2.FONT_HERSHEY_COMPLEX, 0.5, label_color, 1)
+
+        cv2.putText(
+            frame, 'frame ({}/{}) {}'.format(frame_idx, frame_total_length, 'PAUSE' if pause_flag else ''),
+            (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2
+        )
+
+        if save_video:
+            out.write(frame)
+        if show_video:
+            cv2.imshow('show', frame)
+            k = cv2.waitKey(0) if pause_flag else cv2.waitKey(1)
+            if k in [27, ord('q')]:
+                cv2.destroyAllWindows()
+                break
+            elif k == ord('p'):
+                pause_flag = not pause_flag
+                continue
+    
+    cap.release()
+    if save_video:
+        out.release()
+    if show_video:
+        cv2.destroyAllWindows()
+
+def draw_on_video(video, records, from_=0, show_video=False, save_video=None):
+    # preprocess
+    cap = cv2.VideoCapture(video)
+    out = None
+    pause_flag = False
+    if save_video:
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        resolution = tuple(map(int, (cap.get(3), cap.get(4))))
+        out = cv2.VideoWriter(save_video, fourcc, 15, resolution)
+    if show_video:
+        cv2.namedWindow('show')
+
+    # draw by each frame
+    frame_total_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    for frame_idx in tqdm(range(from_, frame_total_length)):
+
+        # get frame
+        cap.set(1, frame_idx)
+        success, frame = cap.read()
+        if not success:
+            LOGGER.warning('Cannot read the {} frame'.format(frame_idx))
+            continue
+
+        # draw beetle
+        paths = records[frame_idx][-1]
+        text_color = (255, 255, 255)
+        for bbox_idx, bbox in enumerate(paths):
+            # convert to BBox structure
+            multiclass_result = None
+            if isinstance(bbox[-1], dict) and len(bbox) == 6:
+                multiclass_result = bbox[-1]
+            bbox[:4] = list(map(int, bbox[:4]))
+            bbox = BBox(frame_idx=frame_idx,
+                        pt1=tuple(bbox[0:2][::-1]),
+                        pt2=tuple(bbox[2:4][::-1]),
+                        confidence=bbox[4],
+                        multiclass_result=multiclass_result)
+            
+            # scroe1=detection confidence, scroe2=classification confidence 
+            score1 = bbox.confidence
+            label, score2 = bbox.classification_label if multiclass_result else ('', None)
+            label_color = get_label_color(label)
+
+            # show current bbox information by conofig
+            cv2.putText(frame, label, bbox.center, cv2.FONT_HERSHEY_COMPLEX, 1, label_color, 2)
+            cv2.rectangle(frame, bbox.pt1, bbox.pt2, label_color, 2)
+            
+            # show message
+            show_msg = 'detect {:.2f}'.format(score1)
+            if score2:
+                show_msg = show_msg + ', ' if show_msg else show_msg
+                show_msg += 'class {:.2f}'.format(score2)
+            if show_msg:
+                for lid, msg in enumerate(show_msg.split('\n')[::-1]):
+                    show_x, show_y = bbox.pt1
+                    show_y -= lid*15 + 5
+                    show_pts = (show_x, show_y)
+                    cv2.putText(frame, msg, show_pts, cv2.FONT_HERSHEY_COMPLEX, 0.5, label_color, 1)
 
         cv2.putText(
             frame, 'frame ({}/{}) {}'.format(frame_idx, frame_total_length, 'PAUSE' if pause_flag else ''),
