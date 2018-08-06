@@ -40,3 +40,4 @@ python3 analyze_action.py \
 --output-path $(printf "output/path/%s" $VIDEO_NAME) \ 
 --sliding-window-length 5 \
 --activate-window-length 3
+deactivate
