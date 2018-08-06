@@ -4,7 +4,7 @@
     "mouse_cnts_dilate_kernel_size": [30, 30],
     "detect_confidence_threshold": 0.2,
     "match_score_threshold": 0.2,
-    "block_scroe_threshold": 0.3,
+    "block_scroe_threshold": 0.5,
     "block_length_threshold": 3,
     "outputs": {
         "show_bbox": false,
