@@ -22,6 +22,8 @@ python generate_bbox.py \
 deactivate && cd ..
 
 # step2: inference classification model
+cd classification
+git checkout master && git pull && cd ..
 source $(pipenv --venv)/bin/activate
 python3 ensemble_predicts.py \
 --gpus $GPU_ID \
