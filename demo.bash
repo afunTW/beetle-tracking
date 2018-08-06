@@ -17,7 +17,7 @@ source $(pipenv --venv)/bin/activate
 python generate_bbox.py \
 --gpu $GPU_ID \
 --weights ../models/detection/lstm_resnet_beetle_rezoom/save.ckpt-1300000 \
---video-root $(dirname $VIDEO_FULLNAME) \
+--video-root $(printf "../%s" $VIDEO_DIRNAME) \
 --video-type avi
 deactivate && cd ..
 
