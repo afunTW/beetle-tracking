@@ -160,11 +160,14 @@ def show_tracker_flow(video, trackerflow, config, from_=0, show_video=False, sav
                     
                     # show message
                     show_msg = ''
-                    if config.get('show_detect_score', False):
+                    if config.get('show_detect_score', False) and bbox.confidence:
                         show_msg += 'detect {:.2f}'.format(bbox.confidence)
                     if config.get('show_class_score', False):
                         show_msg = show_msg + ', ' if show_msg else show_msg
                         show_msg += 'class {:.2f}'.format(bbox.multiclass_result.get(label, 0))
+                    if config.get('show_block_score', False) and bbox.block_confidence:
+                        show_msg = show_msg + '\n' if show_msg else show_msg
+                        show_msg += 'block {:.2f}'.format(bbox.block_confidence)
                     if config.get('show_msg_on_mouse', False) and bbox.behavior.get('on_mouse'):
                         show_msg = show_msg + '\n' if show_msg else show_msg
                         show_msg += 'on mouse'

@@ -10,6 +10,7 @@
         "show_bbox": false,
         "show_detect_score": true,
         "show_class_score": true,
+        "show_block_score": true,
         "show_mouse_contour": true,
         "show_msg_on_mouse": true,
         "show_highlight_on_mouse": true,
