@@ -65,10 +65,11 @@ def main(args):
         if not videodir.exists():
             videodir.mkdir(parents=True)
         video_savepath = str(videodir/args.outvideo) if args.outvideo else None
-    show_tracker_flow(args.video, trackflow, args.config,
-                      from_=args.from_idx,
-                      show_video=args.show_video,
-                      save_video=video_savepath)
+    if args.show_video or args.save_video:
+        show_tracker_flow(args.video, trackflow, args.config,
+                          from_=args.from_idx,
+                          show_video=args.show_video,
+                          save_video=video_savepath)
 
 if __name__ == '__main__':
     parser = argparser()
