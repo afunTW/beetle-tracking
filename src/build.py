@@ -90,7 +90,7 @@ def _interpolate_mouse_contour_in_timeline(video: str,
     
     _after_number_of_mouse = len(mouse_contours)
     LOGGER.info('Number of mouse from {} to {}'.format(_before_number_of_mouse, _after_number_of_mouse))
-    LOGGER.info('{}'.format([i.frame_idx for i in mouse_contours]))
+    LOGGER.debug('{}'.format([i.frame_idx for i in mouse_contours]))
     return mouse_contours
 
 def calculate_mouse_contour(video: str, frame_idx: int, kernel_size: list):
@@ -163,8 +163,6 @@ def build_flow(video:str, filename: str, config: str):
                     if match_matrix[n_bbox1][n_bbox2] > config['match_score_threshold']:
                         bbox1 = records[fid].bboxes[n_bbox1]
                         bbox2 = records[fid+1].bboxes[n_bbox2]
-                        bbox1.next = bbox2
-                        bbox2.prev = bbox1
                         bbox2.assign_id = bbox1.assign_id
 
                         # build a list of TrackBlock
@@ -198,12 +196,14 @@ def build_flow(video:str, filename: str, config: str):
                                                                 config['mouse_center_shift_boundary'])
         # final result
         trackflow = TrackFlow(reference_bbox.multiclass_result.keys())
-        LOGGER.info('Build TrackFlow for each block')
+        LOGGER.info('Build TrackFlow with {} block'.format(len(tracker_blocks)))
         for block in tqdm(tracker_blocks):
             block.vote_for_label()
             if len(block.bboxes) > config['block_length_threshold'] and \
             block.confidence > config['block_scroe_threshold']:
                 trackflow.append_block(block.label, block)
+                for bbox in block.bboxes:
+                    bbox.block_confidence = block.confidence
         for k, v in trackflow.paths.items():
             v = sorted(v, key=lambda x: x.frame_idx)
         check_on_mouse(trackflow, mouse_contours)
