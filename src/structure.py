@@ -23,6 +23,7 @@ class BBox(object):
         self.next = None
         self.assign_id = None
         self.assign_label = None
+        self.block_confidence = None
 
         # init process
         self._init_behavior()
@@ -81,7 +82,6 @@ class TrackBlock(object):
         self.bboxes = [bbox]
         self.label = None
 
-        self._frame_idx_set = set()
         self._confidence = None
         self._nbboxes_true_label = None
         self._nbboxes_confidence = None
@@ -92,7 +92,7 @@ class TrackBlock(object):
     
     @property
     def frame_idx_set(self):
-        return self._frame_idx_set
+        return set(b.frame_idx for b in self.bboxes)
     
     @property
     def confidence(self):
@@ -111,8 +111,9 @@ class TrackBlock(object):
         return self._nbboxes_true_label
     
     def append(self, bbox):
+        self.bboxes[-1].next = bbox
+        bbox.prev = self.bboxes[-1]
         self.bboxes.append(bbox)
-        self._frame_idx_set.add(bbox.frame_idx)
 
     def vote_for_label(self):
         labels = [b.classification_label[0] for b in self.bboxes]
@@ -133,24 +134,90 @@ class TrackFlow(object):
     def __init__(self, reference_keys):
         self._ref_keys = reference_keys
         self._trackblock_paths = {k: [] for k in reference_keys}
+        self._paths = {k: [] for k in reference_keys}
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.paths = {k: [] for k in reference_keys}
 
         self.mouse_cnts = None
         self.mouse_skip_nframe = None
         self.check_on_mouse = False
+        self.check_update_path = False
+    
+    @property
+    def paths(self):
+        if not self.check_update_path:
+            self.flatten_block()
+        return self._paths
+
+    def _cut_block_by_frame_idx(self, block, frame_idx, op='backward'):
+        assert op in ['backward', 'forward']
+        if op == 'backward':
+            block.bboxes = [b for b in block.bboxes if b.frame_idx <= frame_idx]
+            block.bboxes[-1].next = None
+        elif op == 'forawrd':
+            block.bboxes = [b for b in block.bboxes if b.frame_idx > frame_idx]
+            block.bboxes[0].prev = None
+        return block
+
+    def _get_bbox_by_frame_idx(self, block, frame_idx):
+        return [b for b in block.bboxes if b.frame_idx == frame_idx][0]
+
+    def _merge_block(self, block1, block2):
+        # make sure the block is further than block2
+        if block1.bboxes[0].frame_idx > block2.bboxes[0].frame_idx:
+            block1, block2 = block2, block1
+        
+        # merge
+        score1 = block1.confidence * len(block1.bboxes)
+        score2 = block2.confidence * len(block2.bboxes)
+        bboxes = None
+        if score1 >= score2:
+            merge_frame_idx = block1.bboxes[-1].frame_idx
+            bboxes = [b for b in block1.bboxes if b.frame_idx <= merge_frame_idx]
+            bboxes += [b for b in block2.bboxes if b.frame_idx > merge_frame_idx]    
+        else:
+            merge_frame_idx = block2.bboxes[0].frame_idx
+            bboxes = [b for b in block1.bboxes if b.frame_idx < merge_frame_idx]
+            bboxes += [b for b in block2.bboxes if b.frame_idx >= merge_frame_idx]
+        
+        new_block = None
+        for bid, bbox in enumerate(bboxes):
+            if not new_block:
+                new_block = TrackBlock(bbox)
+            else:
+                new_block.append(bbox)
+        return new_block
     
     def append_block(self, label, block):
         for bid, exist_block in enumerate(self._trackblock_paths[label]):
             # frame_idx intersection
-            if exist_block.frame_idx_set & block.frame_idx_set:
-                if exist_block.confidence < block.confidence:
-                    self._trackblock_paths[label].remove(exist_block)
-                    self.paths[label] = [b for b in self.paths[label] if b.frame_idx not in exist_block.frame_idx_set]
+            bbox_intersection = exist_block.frame_idx_set & block.frame_idx_set
+            if bbox_intersection:
+                intersect_frame_idx = list(bbox_intersection)[0]
+                intersect_bbox1 = self._get_bbox_by_frame_idx(exist_block, intersect_frame_idx)
+                intersect_bbox2 = self._get_bbox_by_frame_idx(block, intersect_frame_idx)
+
+                # if conflict bbox overlap
+                self._trackblock_paths[label].remove(exist_block)
+                if intersect_bbox1.calc_iou(intersect_bbox2):
+                    block = self._merge_block(exist_block, block)
+                elif exist_block.bboxes[0].frame_idx < block.bboxes[0].frame_idx:
+                    exist_block = self._cut_block_by_frame_idx(exist_block, intersect_frame_idx, 'backward')
+                    block = self._cut_block_by_frame_idx(block, intersect_frame_idx, 'forward')
+                    self._trackblock_paths[label].append(exist_block)
                 else:
-                    return
+                    exist_block = self._cut_block_by_frame_idx(exist_block, intersect_frame_idx, 'forward')
+                    block = self._cut_block_by_frame_idx(block, intersect_frame_idx, 'backward')
+                    self._trackblock_paths[label].append(exist_block)
+
         self._trackblock_paths[label].append(block)
-        self.paths[label] += block.bboxes
+        self.check_update_path = False
+
+    def flatten_block(self):
+        for label, blocks in self._trackblock_paths.items():
+            self._paths[label] = []
+            for block in blocks:
+                self._paths[label] += block.bboxes
+        self.check_update_path = True
 
 class Mouse(object):
     def __init__(self):
