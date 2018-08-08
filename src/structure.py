@@ -200,14 +200,8 @@ class TrackFlow(object):
                 self._trackblock_paths[label].remove(exist_block)
                 if intersect_bbox1.calc_iou(intersect_bbox2):
                     block = self._merge_block(exist_block, block)
-                elif exist_block.bboxes[0].frame_idx < block.bboxes[0].frame_idx:
-                    exist_block = self._cut_block_by_frame_idx(exist_block, intersect_frame_idx, 'backward')
-                    block = self._cut_block_by_frame_idx(block, intersect_frame_idx, 'forward')
-                    self._trackblock_paths[label].append(exist_block)
                 else:
-                    exist_block = self._cut_block_by_frame_idx(exist_block, intersect_frame_idx, 'forward')
-                    block = self._cut_block_by_frame_idx(block, intersect_frame_idx, 'backward')
-                    self._trackblock_paths[label].append(exist_block)
+                    block = block if block.confidence > exist_block.confidence else exist_block
 
         self._trackblock_paths[label].append(block)
         self.check_update_path = False
