@@ -143,6 +143,16 @@ def show_tracker_flow(video, trackerflow, config, from_=0, show_video=False, sav
         for label, paths in draw_candidate.items():
             label_color = get_label_color(label)
             text_color = (255, 255, 255)
+
+            # draw start point
+            if config.get('show_start_bbox', False) and paths:
+                start_bbox = paths[0]
+                while start_bbox.prev:
+                    start_bbox = start_bbox.prev
+                cv2.rectangle(frame, start_bbox.pt1, start_bbox.pt2, label_color, 2)
+                cv2.putText(frame, label, start_bbox.center, cv2.FONT_HERSHEY_COMPLEX, 1, label_color, 2)
+
+            # draw path
             for bbox_idx, bbox in enumerate(paths):
 
                 # link the path
@@ -180,7 +190,7 @@ def show_tracker_flow(video, trackerflow, config, from_=0, show_video=False, sav
 
         cv2.putText(
             frame, 'frame ({}/{}) {}'.format(frame_idx, frame_total_length, 'PAUSE' if pause_flag else ''),
-            (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2
+            (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, text_color, 2
         )
 
         if save_video:
