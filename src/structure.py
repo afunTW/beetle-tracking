@@ -111,9 +111,9 @@ class TrackBlock(object):
     @property
     def confidence(self):
         if not self._nbboxes_confidence or self._nbboxes_confidence != len(self.bboxes):
-            bbox_labels = [b.classification_label for b in self.bboxes]
             self.vote_for_label()
-            self._confidence = sum(i[1] for i in bbox_labels if i[0] == self._label) / len(self.bboxes)
+            bbox_labels = [b.multiclass_result[self._label] for b in self.bboxes]
+            self._confidence = sum(bbox_labels) / len(bbox_labels)
             self._nbboxes_confidence = len(self.bboxes)
         return self._confidence
 
@@ -253,7 +253,10 @@ class TrackFlow(object):
                 # if conflict bbox overlap
                 self._trackblock_paths[label].remove(exist_block)
                 blocks = self._block_merging(exist_block, block)
-                self._trackblock_paths[label] += blocks
+                if isinstance(blocks, list):
+                    self._trackblock_paths[label] += blocks
+                else:
+                    self._trackblock_paths[label].append(blocks)
                 self.check_update_path = False
                 return
 
