@@ -214,44 +214,30 @@ class TrackFlow(object):
         if not block1 and not block2:
             return None
         elif not block1 and block2:
-            return block2
+            return [block2]
         elif not block2 and block1:
-            return block1
+            return [block1]
 
         block_is_equal = block1.head.frame_idx == block2.head.frame_idx and \
                          block1.tail.frame_idx == block2.tail.frame_idx
         if block_is_equal:
-            return block1 if block1.confidence > block2.confidence else block2
+            return [block1] if block1.confidence > block2.confidence else [block2]
         elif block1.frame_idx_set & block2.frame_idx_set:
             intersect_frame_idx = sorted(list(block1.frame_idx_set & block2.frame_idx_set))
             block1_l, block1_m = self._block_separating(block1, intersect_frame_idx[0], 'right')
             block1_m, block1_r = self._block_separating(block1_m, intersect_frame_idx[-1], 'left')
             block2_l, block2_m = self._block_separating(block2, intersect_frame_idx[0], 'right')
             block2_m, block2_r = self._block_separating(block2_m, intersect_frame_idx[-1], 'left')
-            block_l = self._block_merging(block1_l, block2_m)
+            block_l = self._block_merging(block1_l, block2_l)
             block_m = self._block_merging(block1_m, block2_m)
             block_r = self._block_merging(block1_r, block2_r)
-            merge_block = []
-            for block in [block_l, block_m, block_r]:
-                if not block:
-                    continue
-                if isinstance(block, list):
-                    merge_block += block
-                else:
-                    merge_block.append(block)
+            merge_block = [b for b in [block_l, block_m, block_r] if b]
+            merge_block = [b for b_set in merge_block for b in b_set]
             return merge_block
         elif block1.label != block2.label:
             return [block1, block2]
         else:
-            if block1.head.frame_idx > block2.head.frame_idx:
-                block1, block2 = block2, block1
-            if block1.tail.frame_idx + 1 == block2.head.frame_idx:
-                if block1.tail.calc_iou(block2.head) > 0:
-                    for bbox in block2.bboxes:
-                        block1.append(bbox)
-                    return block1
-                else:
-                    return block1 if block1.confidence > block2.confidence else block2
+            return [block1] if block1.confidence > block2.confidence else [block2]
 
     def append_block(self, label, block):
         for bid, exist_block in enumerate(self._blocks[label]):
@@ -262,10 +248,8 @@ class TrackFlow(object):
                 # if conflict bbox overlap
                 self._blocks[label].remove(exist_block)
                 blocks = self._block_merging(exist_block, block)
-                if isinstance(blocks, list):
-                    self._blocks[label] += blocks
-                else:
-                    self._blocks[label].append(blocks)
+                for block in blocks:
+                    self._blocks[block.label].append(block)
                 self.check_update_path = False
                 return
 
