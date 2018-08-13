@@ -202,10 +202,12 @@ def build_flow(video:str, filename: str, config: str):
             if len(block.bboxes) > config['block_length_threshold'] and \
             block.confidence > config['block_scroe_threshold']:
                 trackflow.append_block(block.label, block)
+                # trackflow.paths[block.label] += block.bboxes
+        for k, v in trackflow.blocks.items():
+            v = sorted(v, key=lambda x: x.head.frame_idx)
+            for block in v:
                 for bbox in block.bboxes:
                     bbox.block_confidence = block.confidence
-        for k, v in trackflow.paths.items():
-            v = sorted(v, key=lambda x: x.frame_idx)
         check_on_mouse(trackflow, mouse_contours)
 
     return trackflow

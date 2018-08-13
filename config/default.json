@@ -1,13 +1,14 @@
 {
     "mouse_center_shift_boundary": 5,
     "mouse_cnts_per_nframe": 1000,
-    "mouse_cnts_dilate_kernel_size": [30, 30],
+    "mouse_cnts_dilate_kernel_size": [60, 60],
     "detect_confidence_threshold": 0.2,
     "match_score_threshold": 0.2,
-    "block_scroe_threshold": 0.5,
-    "block_length_threshold": 3,
+    "block_scroe_threshold": 0.25,
+    "block_length_threshold": 15,
     "outputs": {
         "show_bbox": false,
+        "show_start_bbox": false,
         "show_detect_score": true,
         "show_class_score": true,
         "show_block_score": true,

@@ -1,5 +1,6 @@
 import logging
 from collections import Counter
+from itertools import combinations
 
 import numpy as np
 
@@ -77,14 +78,30 @@ class Frame(object):
         return len(self.bboxes)
 
 class TrackBlock(object):
-    def __init__(self, bbox):
-        self.head = bbox
-        self.bboxes = [bbox]
-        self.label = None
+    def __init__(self, *bboxes):
+        self.bboxes = []
 
+        self._label = None
         self._confidence = None
+        self._frame_idx_set = set()
         self._nbboxes_true_label = None
         self._nbboxes_confidence = None
+        self._nbboxes_frame_idx_set = None
+
+        for b in bboxes:
+            if not self.bboxes:
+                self.bboxes = [b]
+            else:
+                self.append(b)
+
+    @property
+    def label(self):
+        check_label_and_confidence = self.confidence
+        return self._label
+
+    @property
+    def head(self):
+        return self.bboxes[0]
 
     @property
     def tail(self):
@@ -92,15 +109,17 @@ class TrackBlock(object):
     
     @property
     def frame_idx_set(self):
-        return set(b.frame_idx for b in self.bboxes)
+        if self._nbboxes_frame_idx_set != len(self.bboxes):
+            self._frame_idx_set = set(b.frame_idx for b in self.bboxes)
+            self._nbboxes_frame_idx_set = len(self.bboxes)
+        return self._frame_idx_set
     
     @property
     def confidence(self):
         if not self._nbboxes_confidence or self._nbboxes_confidence != len(self.bboxes):
-            bbox_labels = [b.classification_label for b in self.bboxes]
-            if not self.label: 
-                self.vote_for_label()
-            self._confidence = sum(i[1] for i in bbox_labels if i[0] == self.label) / len(self.bboxes)
+            self.vote_for_label()
+            bbox_labels = [b.multiclass_result[self._label] for b in self.bboxes]
+            self._confidence = sum(bbox_labels) / len(bbox_labels)
             self._nbboxes_confidence = len(self.bboxes)
         return self._confidence
 
@@ -118,8 +137,8 @@ class TrackBlock(object):
     def vote_for_label(self):
         labels = [b.classification_label[0] for b in self.bboxes]
         counter = Counter(labels)
-        self.label, self._num_true_label_bboxes = counter.most_common(1)[0]
-        return self.label
+        self._label, self._num_true_label_bboxes = counter.most_common(1)[0]
+        return self._label
     
     def extract(self):
         node = self.head
@@ -133,7 +152,7 @@ class TrackBlock(object):
 class TrackFlow(object):
     def __init__(self, reference_keys):
         self._ref_keys = reference_keys
-        self._trackblock_paths = {k: [] for k in reference_keys}
+        self._blocks = {k: [] for k in reference_keys}
         self._paths = {k: [] for k in reference_keys}
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -147,21 +166,12 @@ class TrackFlow(object):
         if not self.check_update_path:
             self.flatten_block()
         return self._paths
+    
+    @property
+    def blocks(self):
+        return self._blocks
 
-    def _cut_block_by_frame_idx(self, block, frame_idx, op='backward'):
-        assert op in ['backward', 'forward']
-        if op == 'backward':
-            block.bboxes = [b for b in block.bboxes if b.frame_idx <= frame_idx]
-            block.bboxes[-1].next = None
-        elif op == 'forawrd':
-            block.bboxes = [b for b in block.bboxes if b.frame_idx > frame_idx]
-            block.bboxes[0].prev = None
-        return block
-
-    def _get_bbox_by_frame_idx(self, block, frame_idx):
-        return [b for b in block.bboxes if b.frame_idx == frame_idx][0]
-
-    def _merge_block(self, block1, block2):
+    def _block_padding(self, block1, block2):
         # make sure the block is further than block2
         if block1.bboxes[0].frame_idx > block2.bboxes[0].frame_idx:
             block1, block2 = block2, block1
@@ -187,27 +197,68 @@ class TrackFlow(object):
                 new_block.append(bbox)
         return new_block
     
+    def _block_separating(self, block, frame_idx, break_on='right'):
+        break_bbox = [b for b in block.bboxes if b.frame_idx >= frame_idx][0]
+        break_bbox_index = block.bboxes.index(break_bbox)
+        break_index = {'right': break_bbox_index, 'left': break_bbox_index+1}
+        break_index = break_index.get(break_on, None)
+
+        if break_index is None:
+            self.logger.exception('Block seperating should be intersected or break on right or left')
+            return
+
+        l_block = TrackBlock(*block.bboxes[:break_index]) if break_index > 0 else None
+        r_block = TrackBlock(*block.bboxes[break_index:]) if break_index < len(block.bboxes) else None
+        return l_block, r_block
+
+    def _block_merging(self, block1, block2):
+        if not block1 and not block2:
+            return None
+        elif not block1 and block2:
+            return [block2]
+        elif not block2 and block1:
+            return [block1]
+
+        block_is_equal = block1.head.frame_idx == block2.head.frame_idx and \
+                         block1.tail.frame_idx == block2.tail.frame_idx
+        if block_is_equal:
+            return [block1] if block1.confidence > block2.confidence else [block2]
+        elif block1.frame_idx_set & block2.frame_idx_set:
+            intersect_frame_idx = sorted(list(block1.frame_idx_set & block2.frame_idx_set))
+            block1_l, block1_m = self._block_separating(block1, intersect_frame_idx[0], 'right')
+            block1_m, block1_r = self._block_separating(block1_m, intersect_frame_idx[-1], 'left')
+            block2_l, block2_m = self._block_separating(block2, intersect_frame_idx[0], 'right')
+            block2_m, block2_r = self._block_separating(block2_m, intersect_frame_idx[-1], 'left')
+            block_l = self._block_merging(block1_l, block2_l)
+            block_m = self._block_merging(block1_m, block2_m)
+            block_r = self._block_merging(block1_r, block2_r)
+            merge_block = [b for b in [block_l, block_m, block_r] if b]
+            merge_block = [b for b_set in merge_block for b in b_set]
+            return merge_block
+        elif block1.label != block2.label:
+            return [block1, block2]
+        else:
+            return [block1] if block1.confidence > block2.confidence else [block2]
+
     def append_block(self, label, block):
-        for bid, exist_block in enumerate(self._trackblock_paths[label]):
+        for bid, exist_block in enumerate(self._blocks[label]):
             # frame_idx intersection
             bbox_intersection = exist_block.frame_idx_set & block.frame_idx_set
             if bbox_intersection:
-                intersect_frame_idx = list(bbox_intersection)[0]
-                intersect_bbox1 = self._get_bbox_by_frame_idx(exist_block, intersect_frame_idx)
-                intersect_bbox2 = self._get_bbox_by_frame_idx(block, intersect_frame_idx)
 
                 # if conflict bbox overlap
-                self._trackblock_paths[label].remove(exist_block)
-                if intersect_bbox1.calc_iou(intersect_bbox2):
-                    block = self._merge_block(exist_block, block)
-                else:
-                    block = block if block.confidence > exist_block.confidence else exist_block
+                self._blocks[exist_block.label].remove(exist_block)
+                blocks = self._block_merging(exist_block, block)
+                for block in blocks:
+                    self.append_block(block.label, block)
+                self.check_update_path = False
+                return
 
-        self._trackblock_paths[label].append(block)
+        self._blocks[label].append(block)
         self.check_update_path = False
 
     def flatten_block(self):
-        for label, blocks in self._trackblock_paths.items():
+        for label, blocks in self._blocks.items():
             self._paths[label] = []
             for block in blocks:
                 self._paths[label] += block.bboxes
