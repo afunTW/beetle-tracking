@@ -1,5 +1,6 @@
 import logging
 from collections import Counter
+from itertools import combinations
 
 import numpy as np
 
@@ -246,10 +247,10 @@ class TrackFlow(object):
             if bbox_intersection:
 
                 # if conflict bbox overlap
-                self._blocks[label].remove(exist_block)
+                self._blocks[exist_block.label].remove(exist_block)
                 blocks = self._block_merging(exist_block, block)
                 for block in blocks:
-                    self._blocks[block.label].append(block)
+                    self.append_block(block.label, block)
                 self.check_update_path = False
                 return
 
