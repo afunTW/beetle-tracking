@@ -37,8 +37,10 @@ def argparser():
     parser.add_argument('--save-video', dest='save_video', action='store_true', help='save video with given name')
     parser.add_argument('--no-save-video', dest='save_video', action='store_false')
     parser.add_argument('--output-video', dest='outvideo', default='track.avi')
+    parser.add_argument('--pause', dest='pause', action='store_true')
+    parser.add_argument('--no-pause', dest='pause', action='store_false')
     parser.add_argument('--log', dest='log', default='final.log')
-    parser.set_defaults(show_video=False, save_video=True)
+    parser.set_defaults(show_video=False, save_video=True, pause=False)
     return parser
 
 @func_profile
@@ -68,6 +70,7 @@ def main(args):
     if args.show_video or args.save_video:
         show_tracker_flow(args.video, trackflow, args.config,
                           from_=args.from_idx,
+                          pause=args.pause,
                           show_video=args.show_video,
                           save_video=video_savepath)
 

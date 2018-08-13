@@ -81,11 +81,12 @@ def convert_and_output(savedir, label, flow):
                                 'on_mouse'])
     df.to_csv(savepath, index=False)
 
-def show_tracker_flow(video, trackerflow, config, from_=0, show_video=False, save_video=None):
+def show_tracker_flow(video, trackerflow, config,
+                      from_=0, pause=False, show_video=False, save_video=None):
     # preprocess
     cap = cv2.VideoCapture(video)
     out = None
-    pause_flag = False
+    pause_flag = pause
     if save_video:
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         resolution = tuple(map(int, (cap.get(3), cap.get(4))))
