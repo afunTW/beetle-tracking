@@ -201,11 +201,11 @@ def show_tracker_flow(video, trackerflow, config, from_=0, show_video=False, sav
     if show_video:
         cv2.destroyAllWindows()
 
-def draw_on_video(video, records, from_=0, show_video=False, save_video=None):
+def draw_on_video(video, records, from_=0, show_video=False, save_video=None, pause_flag=False):
     # preprocess
     cap = cv2.VideoCapture(video)
     out = None
-    pause_flag = False
+    pause_flag = pause_flag
     if save_video:
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         resolution = tuple(map(int, (cap.get(3), cap.get(4))))

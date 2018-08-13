@@ -16,8 +16,10 @@ def argparser():
     parser.add_argument('--no-show-video', dest='show_video', action='store_false')
     parser.add_argument('--save-video', dest='save_video', action='store_true', help='save video with given name')
     parser.add_argument('--no-save-video', dest='save_video', action='store_false')
+    parser.add_argument('--pause', dest='pause', action='store_true')
+    parser.add_argument('--no-pause', dest='pause', action='store_false')
     parser.add_argument('--output-video', dest='outvideo', default='track.avi')
-    parser.set_defaults(show_video=False, save_video=True)
+    parser.set_defaults(show_video=False, save_video=True, pause=False)
     return parser
 
 @func_profile
@@ -32,7 +34,8 @@ def main(args):
         draw_on_video(args.video, records, 
                       from_=args.from_idx,
                       show_video=args.show_video,
-                      save_video=args.save_video)
+                      save_video=args.save_video,
+                      pause_flag=args.pause)
     elif args.options == 'classification':
         with open(args.record, 'r') as f:
             records = f.readlines()
@@ -40,7 +43,8 @@ def main(args):
         draw_on_video(args.video, records, 
                       from_=args.from_idx,
                       show_video=args.show_video,
-                      save_video=args.save_video)
+                      save_video=args.save_video,
+                      pause_flag=args.pause)
 
 if __name__ == '__main__':
     main(argparser().parse_args())
