@@ -5,7 +5,7 @@
     "detect_confidence_threshold": 0.2,
     "match_score_threshold": 0.2,
     "block_scroe_threshold": 0.25,
-    "block_length_threshold": 3,
+    "block_length_threshold": 15,
     "outputs": {
         "show_bbox": false,
         "show_start_bbox": false,
