@@ -82,8 +82,10 @@ class TrackBlock(object):
 
         self._label = None
         self._confidence = None
+        self._frame_idx_set = set()
         self._nbboxes_true_label = None
         self._nbboxes_confidence = None
+        self._nbboxes_frame_idx_set = None
 
         for b in bboxes:
             if not self.bboxes:
@@ -106,7 +108,10 @@ class TrackBlock(object):
     
     @property
     def frame_idx_set(self):
-        return set(b.frame_idx for b in self.bboxes)
+        if self._nbboxes_frame_idx_set != len(self.bboxes):
+            self._frame_idx_set = set(b.frame_idx for b in self.bboxes)
+            self._nbboxes_frame_idx_set = len(self.bboxes)
+        return self._frame_idx_set
     
     @property
     def confidence(self):
@@ -146,7 +151,7 @@ class TrackBlock(object):
 class TrackFlow(object):
     def __init__(self, reference_keys):
         self._ref_keys = reference_keys
-        self._trackblock_paths = {k: [] for k in reference_keys}
+        self._blocks = {k: [] for k in reference_keys}
         self._paths = {k: [] for k in reference_keys}
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -160,6 +165,10 @@ class TrackFlow(object):
         if not self.check_update_path:
             self.flatten_block()
         return self._paths
+    
+    @property
+    def blocks(self):
+        return self._blocks
 
     def _block_padding(self, block1, block2):
         # make sure the block is further than block2
@@ -245,26 +254,26 @@ class TrackFlow(object):
                     return block1 if block1.confidence > block2.confidence else block2
 
     def append_block(self, label, block):
-        for bid, exist_block in enumerate(self._trackblock_paths[label]):
+        for bid, exist_block in enumerate(self._blocks[label]):
             # frame_idx intersection
             bbox_intersection = exist_block.frame_idx_set & block.frame_idx_set
             if bbox_intersection:
 
                 # if conflict bbox overlap
-                self._trackblock_paths[label].remove(exist_block)
+                self._blocks[label].remove(exist_block)
                 blocks = self._block_merging(exist_block, block)
                 if isinstance(blocks, list):
-                    self._trackblock_paths[label] += blocks
+                    self._blocks[label] += blocks
                 else:
-                    self._trackblock_paths[label].append(blocks)
+                    self._blocks[label].append(blocks)
                 self.check_update_path = False
                 return
 
-        self._trackblock_paths[label].append(block)
+        self._blocks[label].append(block)
         self.check_update_path = False
 
     def flatten_block(self):
-        for label, blocks in self._trackblock_paths.items():
+        for label, blocks in self._blocks.items():
             self._paths[label] = []
             for block in blocks:
                 self._paths[label] += block.bboxes
