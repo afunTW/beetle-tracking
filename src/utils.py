@@ -113,13 +113,13 @@ def show_tracker_flow(video, trackerflow, config, from_=0, show_video=False, sav
             continue
         
         # get the drawing candidate by path_Length
-        draw_candidate = {k: [] for k in trackerflow.paths.keys()}
-        for k, bboxes in trackerflow.paths.items():
-            for bbox in bboxes:
-                if bbox.frame_idx > frame_idx:
-                    break
-                if max(0, frame_idx-config.get('path_length', 1)) < bbox.frame_idx:
-                    draw_candidate[k].append(bbox)
+        draw_candidate = {k: [] for k in trackerflow.blocks.keys()}
+        for k, blocks in trackerflow.blocks.items():
+            target_path_length = config.get('path_length', 0)
+            target_index_range = set(range(frame_idx-target_path_length, frame_idx+1))
+            for block in blocks:
+                if block.frame_idx_set & target_index_range:
+                    draw_candidate[block.label].append(block)
 
         # draw mouse
         if current_ref_mouse_idx is not None:
@@ -140,58 +140,56 @@ def show_tracker_flow(video, trackerflow, config, from_=0, show_video=False, sav
                     cv2.line(frame, pt1, pt2, mouse_color, 2, cv2.LINE_AA)
 
         # draw beetle
-        for label, paths in draw_candidate.items():
+        for label, blocks in draw_candidate.items():
             label_color = get_label_color(label)
             text_color = (255, 255, 255)
-
-            # draw start point
-            if config.get('show_start_bbox', False) and paths:
-                start_bbox = paths[0]
-                while start_bbox.prev:
-                    start_bbox = start_bbox.prev
-                cv2.rectangle(frame, start_bbox.pt1, start_bbox.pt2, label_color, 2)
-                cv2.putText(frame, label, start_bbox.center, cv2.FONT_HERSHEY_COMPLEX, 1, label_color, 2)
-
+            
             # draw path
-            for bbox_idx, bbox in enumerate(paths):
-
-                # link the path
-                if bbox_idx > 1 and paths[bbox_idx-1].next == bbox:
-                    last_bbox = paths[bbox_idx-1]
-                    cv2.line(frame, bbox.center, last_bbox.center, label_color, 1, cv2.LINE_AA)
-
-                # show current bbox information by conofig
-                if bbox_idx == len(paths)-1:
-                    cv2.putText(frame, label, bbox.center, cv2.FONT_HERSHEY_COMPLEX, 1, label_color, 2)
-                    enable_bbox_in_condiction = \
-                        config.get('show_highlight_on_mouse', False) and bbox.behavior['on_mouse']
-                    if config.get('show_bbox', False) or enable_bbox_in_condiction:
-                        cv2.rectangle(frame, bbox.pt1, bbox.pt2, label_color, 2)
+            for block_idx, block in enumerate(blocks):
+                
+                # draw start point
+                if config.get('show_start_bbox', False) and block.bboxes:
+                    cv2.rectangle(frame, block.head.pt1, block.head.pt2, label_color, 2)
+                
+                # draw path
+                target_path_length = config.get('path_length', 0)
+                target_index_range = set(range(frame_idx-target_path_length, frame_idx+1))
+                candidate_bboxes = [b for b in block.bboxes if b.frame_idx in target_index_range]
+                for bbox_idx, bbox in enumerate(candidate_bboxes):
+                    if bbox_idx > 1:
+                        cv2.line(frame, bbox.prev.center, bbox.center, label_color, 1, cv2.LINE_AA)
                     
-                    # show message
-                    show_msg = ''
-                    if config.get('show_detect_score', False) and bbox.confidence:
-                        show_msg += 'detect {:.2f}'.format(bbox.confidence)
-                    if config.get('show_class_score', False):
-                        show_msg = show_msg + ', ' if show_msg else show_msg
-                        show_msg += 'class {:.2f}'.format(bbox.multiclass_result.get(label, 0))
-                    if config.get('show_block_score', False) and bbox.block_confidence:
-                        show_msg = show_msg + '\n' if show_msg else show_msg
-                        show_msg += 'block {:.2f}'.format(bbox.block_confidence)
-                    if config.get('show_msg_on_mouse', False) and bbox.behavior.get('on_mouse'):
-                        show_msg = show_msg + '\n' if show_msg else show_msg
-                        show_msg += 'on mouse'
-                    if show_msg:
-                        for lid, msg in enumerate(show_msg.split('\n')[::-1]):
-                            show_x, show_y = bbox.pt1
-                            show_y -= lid*15 + 5
-                            show_pts = (show_x, show_y)
-                            cv2.putText(frame, msg, show_pts, cv2.FONT_HERSHEY_COMPLEX, 0.5, label_color, 1)
+                    # show current bbox information by config
+                    if bbox.frame_idx == frame_idx:
+                        cv2.putText(frame, label, bbox.center, cv2.FONT_HERSHEY_COMPLEX, 1, label_color, 2)
+                        enable_bbox_in_condiction = \
+                            config.get('show_highlight_on_mouse', False) and bbox.behavior['on_mouse']
+                        if config.get('show_bbox', False) or enable_bbox_in_condiction:
+                            cv2.rectangle(frame, bbox.pt1, bbox.pt2, label_color, 2)
 
-        cv2.putText(
-            frame, 'frame ({}/{}) {}'.format(frame_idx, frame_total_length, 'PAUSE' if pause_flag else ''),
-            (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, text_color, 2
-        )
+                        # show message
+                        show_msg = ''
+                        if config.get('show_detect_score', False) and bbox.confidence:
+                            show_msg += 'detect {:.2f}'.format(bbox.confidence)
+                        if config.get('show_class_score', False):
+                            show_msg = show_msg + ', ' if show_msg else show_msg
+                            show_msg += 'class {:.2f}'.format(bbox.multiclass_result.get(label, 0))
+                        if config.get('show_block_score', False) and bbox.block_confidence:
+                            show_msg = show_msg + '\n' if show_msg else show_msg
+                            show_msg += 'block {:.2f}'.format(bbox.block_confidence)
+                        if config.get('show_msg_on_mouse', False) and bbox.behavior.get('on_mouse'):
+                            show_msg = show_msg + '\n' if show_msg else show_msg
+                            show_msg += 'on mouse'
+                        if show_msg:
+                            for lid, msg in enumerate(show_msg.split('\n')[::-1]):
+                                show_x, show_y = bbox.pt1
+                                show_y -= lid*15 + 5
+                                show_pts = (show_x, show_y)
+                                cv2.putText(frame, msg, show_pts, cv2.FONT_HERSHEY_COMPLEX, 0.5, label_color, 1)
+
+        show_frame_msg = 'frame ({}/{}) {}'.format(
+            frame_idx, frame_total_length, 'PAUSE' if pause_flag else '')
+        cv2.putText(frame, show_frame_msg, (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, text_color, 2)
 
         if save_video:
             out.write(frame)
