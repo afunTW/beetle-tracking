@@ -112,8 +112,8 @@ $ python3 main.py \
 
 - [ ] `TensorBox` write up and confirm the stable version  
 - [ ] `ensemble_predicts.py` available parellel predict (multi-GPU multi-models)
-- [ ] demo script
-- [ ] available to ouput the csv only
+- [x] demo script
+- [x] available to ouput the csv only
 
 ## Reference
 
