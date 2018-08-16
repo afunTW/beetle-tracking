@@ -1,25 +1,14 @@
-"""[summary]
-
-e.g.
-python3 main.py \
---video "[CH01] 2017-03-10 20.45.00_x264.avi" \
---detection-result "[CH01] 2017-03-10 20.45.00_x264.txt" \
---config config/default.json \
---log final.log \
---output-video output.avi
-
-Returns:
-    [type] -- [description]
-"""
-
 import argparse
 import logging
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 import cv2
 from src.build import build_flow
 from src.utils import *
+from tqdm import tqdm
 
 LOGGERS = [
     logging.getLogger('src.utils'),
@@ -58,9 +47,35 @@ def main(args):
     logger.info(args)
 
     trackflow = build_flow(args.video, args.classification_result, args.config)
-    for label, flow in trackflow.paths.items():
-        convert_and_output(trackpath_dir, label, flow)
 
+    # get timestamp and save path to file
+    cap = cv2.VideoCapture(args.video)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    cap.release()
+
+    trackflow_all_label = []
+    for label, flow in trackflow.paths.items():
+        logger.info('get timestamp and convert {}'.format(label))
+        for bbox in tqdm(flow):
+            bbox.timestamp = bbox.frame_idx / fps * 1000
+        label_result = [[bbox.frame_idx, bbox.timestamp, label,
+                         *bbox.pt1,
+                         *bbox.pt2,
+                         *bbox.center,
+                         *bbox_behavior_encoding(bbox.behavior)] for bbox in flow]
+        trackflow_all_label += label_result
+    
+    trackflow_all_label = sorted(trackflow_all_label, key=lambda x: x[0])
+    path_savepath = str(trackpath_dir / 'paths.csv')
+    df_paths = pd.DataFrame(trackflow_all_label,
+                            columns=['frame_idx', 'timestamp_ms', 'label', 
+                                     'pt1.x', 'pt1.y',
+                                     'pt2.x', 'pt2.y',
+                                     'center.x', 'center.y',
+                                     'on_mouse'])
+    df_paths.to_csv(path_savepath, index=False)
+
+    # save video
     video_savepath = None
     if args.save_video:
         videodir = outdir / 'video'

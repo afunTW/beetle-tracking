@@ -5,7 +5,6 @@ from datetime import datetime
 from functools import wraps
 
 import numpy as np
-import pandas as pd
 
 import cv2
 from tqdm import tqdm
@@ -65,21 +64,6 @@ def bbox_behavior_encoding(behavior):
     for i in checked:
         encode_array.append(int(behavior[i]))
     return encode_array
-
-def convert_and_output(savedir, label, flow):
-    savepath = str(savedir / '{}_result.csv'.format(label))
-    label_result = [[bbox.frame_idx,
-                        *bbox.pt1,
-                        *bbox.pt2,
-                        *bbox.center,
-                        *bbox_behavior_encoding(bbox.behavior)] for bbox in flow]
-    df = pd.DataFrame(label_result,
-                        columns=['frame_idx',
-                                'pt1.x', 'pt1.y',
-                                'pt2.x', 'pt2.y',
-                                'center.x', 'center.y',
-                                'on_mouse'])
-    df.to_csv(savepath, index=False)
 
 def show_tracker_flow(video, trackerflow, config,
                       from_=0, pause=False, show_video=False, save_video=None):

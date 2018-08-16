@@ -12,6 +12,7 @@ class BBox(object):
         # attribute
         self._multiclass_result = multiclass_result
         self.frame_idx = frame_idx
+        self.timestamp = None
         self.pt1, self.pt2 = pt1, pt2
         self.w, self.h = int(pt2[0] - pt1[0]), int(pt2[1] - pt1[1])
         self.center = tuple((int(pt2[0] + pt1[0]) // 2, int(pt2[1] + pt1[1]) // 2))
