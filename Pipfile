@@ -12,6 +12,7 @@ pandas = "*"
 tensorflow-gpu = "==1.4.0"
 keras = "==2.1.0"
 "h5py" = "*"
+xlrd = "*"
 
 [dev-packages]
 ipython = "*"
