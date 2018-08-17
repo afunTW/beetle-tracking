@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import sys
 from pathlib import Path
@@ -76,7 +77,7 @@ def main(args):
                                      'on_mouse'])
     df_paths.to_csv(path_savepath, index=False)
 
-    # save video
+    # show and/or save video
     video_savepath = None
     if args.save_video:
         videodir = outdir / 'video'
@@ -84,7 +85,9 @@ def main(args):
             videodir.mkdir(parents=True)
         video_savepath = str(videodir/args.outvideo) if args.outvideo else None
     if args.show_video or args.save_video:
-        show_tracker_flow(args.video, trackflow, args.config,
+        with open(args.config, 'r') as f:
+            config = json.load(f)
+        show_tracker_flow(args.video, trackflow, config['outputs'],
                           from_=args.from_idx,
                           pause=args.pause,
                           show_video=args.show_video,

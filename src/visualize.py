@@ -1,9 +1,9 @@
-import logging
 import json
+import logging
 
 import cv2
-from tqdm import tqdm
 from src.structure import BBox
+from tqdm import tqdm
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,8 +35,6 @@ def show_tracker_flow(video, trackerflow, config,
         current_ref_mouse_idx, next_ref_mouse_idx = 0, 1
     elif len(trackerflow.mouse_cnts) == 1:
         current_ref_mouse_idx = 0
-    with open(config, 'r') as f:
-        config = json.load(f)['outputs']
 
     # draw by each frame
     frame_total_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
