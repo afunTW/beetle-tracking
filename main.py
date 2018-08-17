@@ -77,6 +77,19 @@ def main(args):
                                      'on_mouse'])
     df_paths.to_csv(path_savepath, index=False)
 
+    # save mouse contours
+    mouse_cnts_filepath = str(Path(args.video).parent / '{}_mouse.json'.format(Path(args.video).stem))
+    mouse_cnts = {
+        str(m.frame_idx): {
+            'contour': m.contour.tolist(),
+            'contour_extend': m.contour_extend.tolist(),
+            'contour_extend_kernel': m.contour_extend_kernel.tolist(),
+            'center': m.center.tolist()
+        } for m in trackflow.mouse_cnts
+    }
+    with open(mouse_cnts_filepath, 'w+') as f:
+        json.dump(mouse_cnts, f)
+
     # show and/or save video
     video_savepath = None
     if args.save_video:
