@@ -1,7 +1,8 @@
 import argparse
 import logging
 import cv2
-from src.utils import func_profile, log_handler, draw_on_video
+from src.utils import func_profile, log_handler
+from src.visualize import draw_on_video
 
 def argparser():
     parser = argparse.ArgumentParser()
