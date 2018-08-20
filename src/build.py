@@ -207,6 +207,7 @@ def build_flow(video:str, filename: str, config: str):
             for block in v:
                 for bbox in block.bboxes:
                     bbox.block_confidence = block.confidence
+                    bbox.block_id = block.block_id
         check_on_mouse(trackflow, mouse_contours)
 
     return trackflow

@@ -1,6 +1,6 @@
 import logging
 from collections import Counter
-from itertools import combinations
+from itertools import combinations, count
 
 import numpy as np
 
@@ -26,6 +26,7 @@ class BBox(object):
         self.assign_id = None
         self.assign_label = None
         self.block_confidence = None
+        self.block_id = None
 
         # init process
         self._init_behavior()
@@ -79,7 +80,9 @@ class Frame(object):
         return len(self.bboxes)
 
 class TrackBlock(object):
+    _ids = count(0)
     def __init__(self, *bboxes):
+        self.block_id = next(self._ids)
         self.bboxes = []
 
         self._label = None
