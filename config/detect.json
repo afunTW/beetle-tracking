@@ -1,0 +1,30 @@
+{
+    "mouse_center_shift_boundary": 5,
+    "mouse_cnts_per_nframe": 1000,
+    "mouse_cnts_dilate_kernel_size": [60, 60],
+    "detect_confidence_threshold": 0.2,
+    "match_score_threshold": 0.2,
+    "block_scroe_threshold": 0.25,
+    "block_length_threshold": 15,
+    "outputs": {
+        "show_bbox": true,
+        "show_start_bbox": false,
+        "show_detect_score": true,
+        "show_class_score": false,
+        "show_block_score": false,
+        "show_mouse_contour": false,
+        "show_msg_on_mouse": false,
+        "show_highlight_on_mouse": false,
+        "path_length": 1
+    },
+    "_comment": [
+        "mouse_center_shift_boundary: 老鼠質心超過多少距離才會重新計算更新輪廓",
+        "mouse_cnts_per_nframe: 每隔 n 個 frame 取一次老鼠輪廓",
+        "mouse_cnts_dilate_kernel_size: 老鼠輪廓 dilate 的程度",
+
+        "detect_confidence_threshold: 過濾 bbox detetection prob 的門檻",
+        "match_score_threshold: hungarian 驗算法算完的 cost matrix 的門檻",
+        "block_scroe_threshold: tracker block 最少要符合的信心程度",
+        "block_length_threshold: tracker block 最少要符合的長度"
+    ]
+}
