@@ -174,6 +174,10 @@ class TrackFlow(object):
     @property
     def blocks(self):
         return self._blocks
+    
+    @property
+    def ref_keys(self):
+        return self._ref_keys
 
     def _block_padding(self, block1, block2):
         # make sure the block is further than block2

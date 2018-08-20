@@ -9,7 +9,7 @@ import pandas as pd
 import cv2
 from src.build import build_flow
 from src.utils import *
-from src.visualize import show_tracker_flow
+from src.visualize import show_and_save_video
 from tqdm import tqdm
 
 LOGGERS = [
@@ -20,7 +20,7 @@ LOGGERS = [
 def argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--video', dest='video', required=True)
-    parser.add_argument('-i', '--input', dest='classification_result', required=True, help='classification result')
+    parser.add_argument('-i', '--input', dest='input', required=True, help='classification result')
     parser.add_argument('-c', '--config', dest='config', default='config/default.json')
     parser.add_argument('--from', dest='from_idx', default=0, type=int)
     parser.add_argument('--show-video', dest='show_video', action='store_true', help='show video with cv2')
@@ -48,7 +48,7 @@ def main(args):
     log_handler(logger, *LOGGERS, logname=str(logdir / args.log) if args.log else None)
     logger.info(args)
 
-    trackflow = build_flow(args.video, args.classification_result, args.config)
+    trackflow = build_flow(args.video, args.input, args.config)
 
     # get timestamp and save path to file
     cap = cv2.VideoCapture(args.video)
@@ -56,26 +56,28 @@ def main(args):
     cap.release()
 
     trackflow_all_label = []
+    label_col = sorted(trackflow.ref_keys)
     for label, flow in trackflow.paths.items():
         logger.info('get timestamp and convert {}'.format(label))
         for bbox in tqdm(flow):
             bbox.timestamp = bbox.frame_idx / fps * 1000
-        label_result = [[bbox.frame_idx, bbox.block_id,
-                         bbox.timestamp, label,
-                         *bbox.pt1,
-                         *bbox.pt2,
-                         *bbox.center,
-                         *bbox_behavior_encoding(bbox.behavior)] for bbox in flow]
-        trackflow_all_label += label_result
+            label_score = [bbox.multiclass_result.get(l, None) for l in label_col]
+            trackflow_all_label.append([
+                bbox.frame_idx, bbox.block_id, bbox.timestamp, label,
+                bbox.confidence, *label_score, bbox.block_confidence,
+                *bbox.pt1, *bbox.pt2, *bbox.center,
+                *bbox_behavior_encoding(bbox.behavior)
+            ])
     
     trackflow_all_label = sorted(trackflow_all_label, key=lambda x: x[0])
+    label_col = ['{}_score'.format(l) for l in label_col]
+    trackflow_cols = [
+        'frame_idx', 'block_idx', 'timestamp_ms', 'label',
+        'detect_score', *label_col, 'block_score',
+        'pt1.x', 'pt1.y', 'pt2.x', 'pt2.y', 'center.x', 'center.y', 'on_mouse'
+    ]
     path_savepath = str(trackpath_dir / 'paths.csv')
-    df_paths = pd.DataFrame(trackflow_all_label,
-                            columns=['frame_idx', 'block_idx', 'timestamp_ms', 'label', 
-                                     'pt1.x', 'pt1.y',
-                                     'pt2.x', 'pt2.y',
-                                     'center.x', 'center.y',
-                                     'on_mouse'])
+    df_paths = pd.DataFrame(trackflow_all_label, columns=trackflow_cols)
     df_paths.to_csv(path_savepath, index=False)
 
     # save mouse contours
@@ -101,11 +103,11 @@ def main(args):
     if args.show_video or args.save_video:
         with open(args.config, 'r') as f:
             config = json.load(f)
-        show_tracker_flow(args.video, trackflow, config['outputs'],
-                          from_=args.from_idx,
-                          pause=args.pause,
-                          show_video=args.show_video,
-                          save_video=video_savepath)
+            show_and_save_video(args.video, df_paths, config['outputs'],
+                                from_=args.from_idx,
+                                show_video=args.show_video,
+                                save_video=video_savepath,
+                                pause_flag=args.pause)
 
 if __name__ == '__main__':
     parser = argparser()
