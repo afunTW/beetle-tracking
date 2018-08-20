@@ -19,9 +19,9 @@ LOGGERS = [
 
 def argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--video', dest='video', required=True)
-    parser.add_argument('--classification-result', dest='classification_result', required=True)
-    parser.add_argument('--config', dest='config', default='config/default.json')
+    parser.add_argument('-v', '--video', dest='video', required=True)
+    parser.add_argument('-i', '--input', dest='classification_result', required=True, help='classification result')
+    parser.add_argument('-c', '--config', dest='config', default='config/default.json')
     parser.add_argument('--from', dest='from_idx', default=0, type=int)
     parser.add_argument('--show-video', dest='show_video', action='store_true', help='show video with cv2')
     parser.add_argument('--no-show-video', dest='show_video', action='store_false')
@@ -60,7 +60,8 @@ def main(args):
         logger.info('get timestamp and convert {}'.format(label))
         for bbox in tqdm(flow):
             bbox.timestamp = bbox.frame_idx / fps * 1000
-        label_result = [[bbox.frame_idx, bbox.timestamp, label,
+        label_result = [[bbox.frame_idx, bbox.block_id,
+                         bbox.timestamp, label,
                          *bbox.pt1,
                          *bbox.pt2,
                          *bbox.center,
@@ -70,7 +71,7 @@ def main(args):
     trackflow_all_label = sorted(trackflow_all_label, key=lambda x: x[0])
     path_savepath = str(trackpath_dir / 'paths.csv')
     df_paths = pd.DataFrame(trackflow_all_label,
-                            columns=['frame_idx', 'timestamp_ms', 'label', 
+                            columns=['frame_idx', 'block_idx', 'timestamp_ms', 'label', 
                                      'pt1.x', 'pt1.y',
                                      'pt2.x', 'pt2.y',
                                      'center.x', 'center.y',

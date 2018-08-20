@@ -82,7 +82,7 @@ With that information we got in the above instruction, `main.py` in this repo ap
 # make sure to run the script under beetle-tracking virtualenv
 $ python3 main.py \
 --video data/demo/demo.avi \
---classification-result data/demo/demo_ensemble.txt \
+--input data/demo/demo_ensemble.txt \
 --config config/default.json \
 --output-video tracking_result.avi
 ```
@@ -99,10 +99,8 @@ $ python3 main.py \
 ...
 ├── output
 │   ├── path
-│   │   ├── A_result.csv (generate by tracking algorithm)
-│   │   ├── O_result.csv (generate by tracking algorithm)
-│   │   ├── =_result.csv (generate by tracking algorithm)
-│   │   └── X_result.csv (generate by tracking algorithm)
+│   │   └── demo
+│   │       └── paths.csv (generate by tracking algorithm)
 │   └── video
 │       └── tracking_result.avi (optional)
 ...
