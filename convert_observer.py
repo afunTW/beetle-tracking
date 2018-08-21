@@ -25,14 +25,15 @@ def ms_to_hmsf(ms):
     hmsf = (datetime.datetime.min + delta).strftime('%H:%M:%S.%f')
     return hmsf
 
-def hmsf_to_idx(hmsf):
+def hmsf_to_idx(hmsf, fps):
     # hmsf <datetime.time>
     # get millisecond -> divide 1/15 -> frame idx
     base = datetime.datetime.strptime('00:00:00.000000', '%H:%M:%S.%f')
     hmsf = str(hmsf) if hmsf.microsecond else '{}.000000'.format(str(hmsf))
     hmsf = datetime.datetime.strptime(str(hmsf), '%H:%M:%S.%f')
-    secs = (hmsf - base).total_seconds()
-    return int(secs * 1000 / 15)
+    delta = hmsf - base
+    total_milliseconds = delta.microseconds/1e+6 + delta.seconds
+    return int(total_milliseconds * fps)
 
 @func_profile
 def main(args):
@@ -54,6 +55,7 @@ def main(args):
     cap = cv2.VideoCapture(args.video)
     fps = cap.get(cv2.CAP_PROP_FPS)
     cap.release()
+    logger.info('video fps = {}'.format(fps))
     
     # clean observer file
     df_observer = pd.read_excel(observer_filepath)
@@ -71,7 +73,7 @@ def main(args):
 
     # padding the records in duration
     df_padding_event = df_observer.copy().reset_index(drop=True)
-    df_padding_event['frame_idx'] = df_padding_event.apply(lambda x: hmsf_to_idx(x['timestamp_hmsf']), axis=1)
+    df_padding_event['frame_idx'] = df_padding_event.apply(lambda x: hmsf_to_idx(x['timestamp_hmsf'], fps), axis=1)
     for index, row in tqdm(df_observer.iterrows()):
         if row['event_type'] == 'State start':
             for end_index, end_row in df_observer.loc[index+1:, ].iterrows():
@@ -98,7 +100,7 @@ def main(args):
                         'label': [row['label']]*len(ts)
                     }
                     df_ts = pd.DataFrame(data=ts_data)
-                    df_ts['frame_idx'] = df_ts.apply(lambda x: hmsf_to_idx(x['timestamp_hmsf']), axis=1)
+                    df_ts['frame_idx'] = df_ts.apply(lambda x: hmsf_to_idx(x['timestamp_hmsf'], fps), axis=1)
                     df_ts.drop_duplicates(subset=['frame_idx'], keep='first', inplace=True)
                     df_padding_event = pd.concat([df_padding_event, df_ts], sort=False)
     df_padding_event.reset_index(drop=True, inplace=True)
