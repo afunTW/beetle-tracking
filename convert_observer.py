@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from pprint import pprint
 
 import numpy as np
 import pandas as pd
@@ -15,9 +16,9 @@ from tqdm import tqdm
 
 def argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--video', dest='video', required=True)
-    parser.add_argument('--observer-file', dest='observer', required=True)
-    parser.add_argument('--paths-file', dest='paths', required=True)
+    parser.add_argument('-v', '--video', dest='video', required=True)
+    parser.add_argument('-i', '--observer-file', dest='observer', required=True)
+    parser.add_argument('-p', '--paths-file', dest='paths', required=True)
     return parser
 
 def ms_to_hmsf(ms):
@@ -74,8 +75,10 @@ def main(args):
     # padding the records in duration
     df_padding_event = df_observer.copy().reset_index(drop=True)
     df_padding_event['frame_idx'] = df_padding_event.apply(lambda x: hmsf_to_idx(x['timestamp_hmsf'], fps), axis=1)
-    for index, row in tqdm(df_observer.iterrows()):
+    action_segment = []
+    for index, row in df_observer.iterrows():
         if row['event_type'] == 'State start':
+            logger.info('From row {:02} - {}'.format(index, row.tolist()))
             for end_index, end_row in df_observer.loc[index+1:, ].iterrows():
                 check_same_event = end_row['subject': 'target'].tolist() == row['subject': 'target'].tolist()
                 check_same_event = check_same_event and end_row['event_type'] == 'State stop'
@@ -103,8 +106,12 @@ def main(args):
                     df_ts['frame_idx'] = df_ts.apply(lambda x: hmsf_to_idx(x['timestamp_hmsf'], fps), axis=1)
                     df_ts.drop_duplicates(subset=['frame_idx'], keep='first', inplace=True)
                     df_padding_event = pd.concat([df_padding_event, df_ts], sort=False)
+                    logger.info('To row {:02} - {}\n{}'.format(end_index, end_row.tolist(), '-'*87))
+                    break
+
     df_padding_event.reset_index(drop=True, inplace=True)
     df_padding_event.drop_duplicates(subset=['frame_idx', 'label'], keep='first', inplace=True)
+    df_padding_event.to_csv(paths_filepath.parent / 'df_padding.csv', index=False)
     logger.info('Complete to create the padding dataframe, shape={}'.format(df_padding_event.shape))
 
     # join action and path
