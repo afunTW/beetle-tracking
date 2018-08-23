@@ -42,7 +42,7 @@ def main(args):
     log_handler(logger)
     logger.info(args)
 
-    outdir = Path('output/path')
+    outdir = Path(__file__).parent / '../output/path'
     if not outdir.exists():
         logger.info('{} not found, created.'.format(str(outdir)))
         outdir.mkdir(parents=True)
@@ -59,7 +59,7 @@ def main(args):
     logger.info('video fps = {}'.format(fps))
     
     # clean observer file
-    df_observer = pd.read_excel(observer_filepath)
+    df_observer = pd.read_csv(observer_filepath)
     df_observer = df_observer[['Time_Relative_hmsf',
                                'Duration_sf',
                                'Subject',
@@ -69,6 +69,8 @@ def main(args):
     df_observer = df_observer.dropna(subset=['Modifier_1'])
     df_observer.columns = ['timestamp_hmsf', 'duration', 'subject', 'behavior', 'target', 'event_type']
     df_observer['label'] = df_observer.apply(lambda row: row['subject'].split(' ')[-1], axis=1)
+    df_observer['timestamp_hmsf'] = pd.to_datetime(df_observer['timestamp_hmsf'])
+    df_observer['timestamp_hmsf'] = [t.time() for t in df_observer['timestamp_hmsf']]
     df_observer.to_csv(fixed_observer_savepath, index=False)
     logger.info('Complete to clean and save observer file at {}'.format(fixed_observer_savepath))
 
@@ -111,7 +113,6 @@ def main(args):
 
     df_padding_event.reset_index(drop=True, inplace=True)
     df_padding_event.drop_duplicates(subset=['frame_idx', 'label'], keep='first', inplace=True)
-    df_padding_event.to_csv(paths_filepath.parent / 'df_padding.csv', index=False)
     logger.info('Complete to create the padding dataframe, shape={}'.format(df_padding_event.shape))
 
     # join action and path
