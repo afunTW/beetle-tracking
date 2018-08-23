@@ -288,9 +288,9 @@ def show_and_save_video(video, records, config,
                 if row['frame_idx'] == frame_idx:
                     cond_enable_bbox = config.get('show_highlight_on_mouse', False) and \
                                         'on_mouse' in group and int(row['on_mouse'])
-                    if len(center) == 1 and 'label' in row:
+                    if isinstance(center[0], int) and 'label' in row:
                         cv2.putText(frame, row['label'], center, cv2.FONT_HERSHEY_COMPLEX, 1, label_color, 2)
-                    elif len(center) == 2 and 'label' in row and 'target_label' in row:
+                    elif isinstance(center[0], tuple) and 'label' in row and 'target_label' in row:
                         color1 = _get_label_color(row['label'])
                         color2 = _get_label_color(row['target_label'])
                         cv2.putText(frame, row['label'], center[0], cv2.FONT_HERSHEY_COMPLEX, 1, color1, 2)
