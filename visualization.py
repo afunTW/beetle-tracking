@@ -36,7 +36,7 @@ def main(args):
     logger = logging.getLogger(__name__)
     log_handler(logger, logging.getLogger('src.visualize'))
     logger.info(args)
-    save_video_path = Path(args.video).with_name(args.outvideo) if args.save_video else None
+    save_video_path = Path('output/video') / args.outvideo if args.save_video else None
 
     with open(args.config, 'r') as f:
         config = json.load(f)['outputs']
