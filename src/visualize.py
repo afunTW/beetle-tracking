@@ -214,6 +214,9 @@ def show_and_save_video(video, records, config,
         save_video {[type]} -- file path to save result (default: {None})
         pause_flag {bool} -- default pause flag (default: {False})
     """
+    LOGGER.info('show_video {}, save_video {}'.format(show_video, save_video))
+    LOGGER.info('config - {}'.format(config))
+
     # video preprocess
     cap = cv2.VideoCapture(video)
     video_writer = None
