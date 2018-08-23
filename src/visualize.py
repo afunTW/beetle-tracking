@@ -277,9 +277,9 @@ def show_and_save_video(video, records, config,
                 if row_idx > 0 and groupby_col:
                     prev_row = group.loc[row_idx-1, :]
                     prev_center = _get_center(prev_row)
-                    if len(prev_center) == 1 and len(center) == 1:
+                    if isinstance(prev_center[0], int) and isinstance(center[0], int):
                         cv2.line(frame, prev_center, center, label_color, 1, cv2.LINE_AA)
-                    elif len(prev_center) == 2 and len(center) == 2:
+                    elif isinstance(prev_center[0], tuple) and isinstance(center[0], tuple):
                         color1 = _get_label_color(row['label'])
                         color2 = _get_label_color(row['target_label'])
                         cv2.line(frame, prev_center[0], center[0], color1, 1, cv2.LINE_AA)
