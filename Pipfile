@@ -17,6 +17,7 @@ xlrd = "*"
 [dev-packages]
 ipython = "*"
 better-exceptions = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.6"
