@@ -114,7 +114,7 @@ def _convert_classification(records):
 
 def _convert_action(df):
     results_cols = [
-        'frame_idx', 'pt1.x', 'pt1.y', 'pt2.x', 'pt2.y',
+        'frame_idx', 'action_idx', 'pt1.x', 'pt1.y', 'pt2.x', 'pt2.y',
         'center1.x', 'center1.y', 'center2.x', 'center2.y',
         'label', 'behavior', 'target_label', 'msg'
     ]
@@ -147,7 +147,7 @@ def _convert_action(df):
                     msg += '\n{} {} {} - {}'.format(t_row['label'], t_row['behavior'], target_label, event_state)
 
                 data.append([
-                    row['frame_idx'], *merge_pt1, *merge_pt2, *subject_center, *target_center,
+                    row['frame_idx'], row['action_idx'], *merge_pt1, *merge_pt2, *subject_center, *target_center,
                     row['label'], row['behavior'], row['target_label'], msg
                 ])
                 _checked_in_group += [row['label'], row['target_label']]

@@ -36,6 +36,19 @@ def hmsf_to_idx(hmsf, fps):
     total_milliseconds = delta.microseconds/1e+6 + delta.seconds
     return int(total_milliseconds * fps)
 
+def add_group_id(df, *groupby_cols, gid_colname='gid'):
+    groupby_cols = list(groupby_cols)
+    df_group = df.groupby(groupby_cols).apply(lambda g: pd.Series({
+        'group_length': g.shape[0]
+    })).reset_index()
+    df_group[gid_colname] = df_group.index
+    df_merge = pd.merge(df, df_group, how='outer', on=groupby_cols)
+    df_merge['group_length'] = df_merge['group_length'].fillna(-1)
+    df_merge[gid_colname] = df_merge[gid_colname].fillna(-1)
+    df_merge['group_length'] = df_merge['group_length'].astype(int)
+    df_merge[gid_colname] = df_merge[gid_colname].astype(int)
+    return df_merge
+
 @func_profile
 def main(args):
     logger = logging.getLogger(__name__)
@@ -119,6 +132,7 @@ def main(args):
     # observer precise on millisecond, timestamp_ms should be remove the microsecond part
     df_paths = pd.read_csv(paths_filepath)
     df_final = pd.merge(df_paths, df_padding_event, how='left', on=['frame_idx', 'label'])
+    df_final = add_group_id(df_final, 'block_idx', 'behavior', 'target', gid_colname='action_idx')
     logger.info('paths file shape={}'.format(df_paths.shape))
     logger.info('Compete merge to final dataframe, shape={}'.format(df_final.shape))
 
