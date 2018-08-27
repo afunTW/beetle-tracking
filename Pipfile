@@ -18,6 +18,7 @@ xlrd = "*"
 ipython = "*"
 better-exceptions = "*"
 pylint = "*"
+jupyter = "*"
 
 [requires]
 python_version = "3.6"
