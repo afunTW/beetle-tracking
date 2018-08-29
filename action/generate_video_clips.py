@@ -1,10 +1,13 @@
 import argparse
 import logging
+import sys
 from pathlib import Path
 
 import cv2
 import pandas as pd
 
+src = Path(__file__).resolve().parents[1]
+sys.path.append(str(src))
 from src.utils import func_profile, log_handler
 from src.visualize import convert_to_dataframe
 

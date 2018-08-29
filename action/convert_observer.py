@@ -10,8 +10,11 @@ import numpy as np
 import pandas as pd
 
 import cv2
-from src.utils import func_profile, log_handler
 from tqdm import tqdm
+
+src = Path(__file__).resolve().parents[1]
+sys.path.append(str(src))
+from src.utils import func_profile, log_handler
 
 
 def argparser():
