@@ -22,8 +22,8 @@ if [[ ! -e $EXPECT_DETECT_OUTPUT ]];then
     echo "$EXPECT_DETECT_OUTPUT not exist... processing"
 
     cd detection
-    git checkout master && git pull
-    pipenv sync && source $(pipenv --venv)/bin/activate
+    # git checkout master && git pull && pipenv sync
+    source $(pipenv --venv)/bin/activate
     python generate_bbox.py \
     --gpu $GPU_ID \
     --weights ../models/detection/lstm_resnet_beetle_rezoom/save.ckpt-1300000 \
@@ -37,8 +37,8 @@ if [[ -e $EXPECT_DETECT_OUTPUT && ! -e $EXPECT_CLASS_OUTPUT ]]; then
     echo "$EXPECT_CLASS_OUTPUT not exist... processing"
 
     cd classification
-    git checkout master && git pull && cd ..
-    pipenv sync && source $(pipenv --venv)/bin/activate
+    # git checkout master && git pull && cd .. && pipenv sync
+    source $(pipenv --venv)/bin/activate
     python3 ensemble_predicts.py \
     --gpu $GPU_ID \
     --video $VIDEO_FULLNAME \
