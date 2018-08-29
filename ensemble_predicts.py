@@ -17,10 +17,10 @@ from tqdm import tqdm
 
 def argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpus', dest='gpus', required=True)
-    parser.add_argument('--video', dest='video', required=True)
-    parser.add_argument('--detection-result', dest='detection_result', required=True)
-    parser.add_argument('--models', dest='models', required=True, nargs='+')
+    parser.add_argument('-g', '--gpu', dest='gpus', required=True)
+    parser.add_argument('-v', '--video', dest='video', required=True)
+    parser.add_argument('-i', '--input', dest='input', required=True, help='detection-result')
+    parser.add_argument('-m', '--models', dest='models', required=True, nargs='+')
     return parser
 
 def log_handler(*loggers, logname=None):
@@ -71,7 +71,7 @@ def main(args):
     # prepare video and detection results
     video_path = Path(args.video)
     cap = cv2.VideoCapture(str(video_path))
-    with open(args.detection_result, 'r') as f:
+    with open(args.input, 'r') as f:
         bbox_results = f.readlines()
         bbox_results = [eval(b.rstrip('\n')) for b in bbox_results]
 
@@ -113,7 +113,7 @@ def main(args):
     # ensemble result
     reference_result = list(y_preds.keys())[0]
     reference_result = y_preds[reference_result]
-    savepath = Path(args.detection_result)
+    savepath = Path(args.input)
     savepath = savepath.parent / '{}_ensemble.txt'.format(str(Path(args.video).stem))
     with open(str(savepath), 'w') as f:
         for idx in tqdm(range(len(reference_result))):
