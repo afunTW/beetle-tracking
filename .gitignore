@@ -105,7 +105,9 @@ venv.bak/
 
 # user-defined
 data/
+data
 models/
 output/
+output
 classification
 detection
