@@ -36,7 +36,7 @@ fi
 if [[ -e $EXPECT_DETECT_OUTPUT && ! -e $EXPECT_CLASS_OUTPUT ]]; then
     echo "$EXPECT_CLASS_OUTPUT not exist... processing"
 
-    cd classification
+    # cd classification
     # git checkout master && git pull && cd .. && pipenv sync
     source $(pipenv --venv)/bin/activate
     python3 ensemble_predicts.py \
