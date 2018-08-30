@@ -20,9 +20,11 @@ def argparser():
         description='recursively process the pipeline in given folder')
     parser.add_argument('-g', '--gpus', dest='gpus', help='1,2,...')
     parser.add_argument('-r', '--recursive', dest='root', help='folders with multi-video')
+    parser.add_argument('-o', '--option', dest='option', \
+                        help='optional argument pass to demo.bash')
     return parser
 
-def demo_one_video(gpu_queue: Queue, video_dirpath: PosixPath):
+def demo_one_video(gpu_queue: Queue, video_dirpath: PosixPath, action: str = None):
     # process and gpu config
     thread_info = current_thread()
     gpuid = None
@@ -36,7 +38,7 @@ def demo_one_video(gpu_queue: Queue, video_dirpath: PosixPath):
     video_name = video_dirpath.name
     video_path = video_dirpath / '{}.avi'.format(video_name)
     LOGGER.info('{} {} -> GPU {} for {}'.format('='*10, thread_info, gpuid, video_name))
-    call([DEMO_BASH, gpuid, video_path, 'action_data'])
+    call([DEMO_BASH, gpuid, video_path, action])
     gpu_queue.put(gpuid)
     LOGGER.info('Complete {}'.format(thread_info))
 
@@ -55,6 +57,9 @@ def main(args):
 
     # multithreading
     th_jobs = []
+    th_args = zip([gpu_queue]*len(root_folders), \
+                  root_folders, \
+                  [args.option]*len(root_folders))
     for th_args in zip([gpu_queue]*len(root_folders), root_folders):
         job = Thread(target=demo_one_video, args=th_args)
         th_jobs.append(job)
