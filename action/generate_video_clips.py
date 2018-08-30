@@ -5,17 +5,20 @@ from pathlib import Path
 
 import cv2
 import pandas as pd
+from tqdm import tqdm
 
-src = Path(__file__).resolve().parents[1]
-sys.path.append(str(src))
+SRC_PATH = Path(__file__).resolve().parents[1]
+sys.path.append(str(SRC_PATH))
 from src.utils import func_profile, log_handler
 from src.visualize import convert_to_dataframe
 
 
 def argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--video', dest='video', required=True, help='source to clip as sequence')
-    parser.add_argument('-i', '--input', dest='input', required=True, help='action_pacth.csv')
+    parser.add_argument('-v', '--video', dest='video', required=True,\
+                        help='source to clip as sequence')
+    parser.add_argument('-i', '--input', dest='input', required=True,\
+    help='action_pacth.csv')
     return parser
 
 @func_profile
@@ -32,9 +35,7 @@ def main(args):
     df_action = pd.read_csv(args.input)
     df_action_fixed = convert_to_dataframe(df_action, 'action')
     availabel_action_idx = [i for i in df_action.action_idx.unique() if i >= 0]
-    for aid in availabel_action_idx:
-        logger.info('Generate #{} video clips'.format(aid))
-        
+    for aid in tqdm(availabel_action_idx):
         # save records
         df_tmp = df_action.loc[df_action.action_idx == aid].copy().reset_index()
         df_tmp_fixed = df_action_fixed.loc[df_action_fixed.action_idx == aid]
