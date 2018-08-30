@@ -64,8 +64,8 @@ def main(args):
             if success:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 for bbox_idx, bbox in enumerate(model_predict_bbox):
-                    y1, x1, y2, x2 = *list(map(int, bbox[:4]))
-                    y1, x1, y2, x2 = *list(map(lambda x: max(x, 0), (y1, x1, y2, x2)))
+                    y1, x1, y2, x2 = [int(i) for i in bbox[:4]]
+                    y1, x1, y2, x2, prob = *list(map(lambda x: max(x, 0), (y1, x1, y2, x2))), bbox[-1]
                     crop_img = frame[y1:y2, x1:x2, ...]
                     img_shape = tuple(model.input.shape.as_list()[1:3])
                     img = cv2.resize(crop_img, img_shape, interpolation=cv2.INTER_AREA)
@@ -106,7 +106,6 @@ def main(args):
                 f.write('\n')
     logger.info('Save final result at {}'.format(str(savepath)))
     cap.release()
-
 
 if __name__ == '__main__':
     main(argparser().parse_args())

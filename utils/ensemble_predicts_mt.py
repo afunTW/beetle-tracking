@@ -64,8 +64,8 @@ def inference(gpu_name, video_path, model_path, detection_result, queue):
                         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         pending_bboxes = deepcopy(bboxes)
                         for bbox_idx, bbox in enumerate(bboxes):
-                            y1, x1, y2, x2 = *list(map(int, bbox[:4])), bbox[-1]
-                            y1, x1, y2, x2 = *list(map(lambda x: max(x, 0), (y1, x1, y2, x2)))
+                            y1, x1, y2, x2, prob = *list(map(int, bbox[:4])), bbox[-1]
+                            y1, x1, y2, x2, prob = *list(map(lambda x: max(x, 0), (y1, x1, y2, x2))), bbox[-1]
                             crop_img = frame[y1:y2, x1:x2, ...]
                             img_shape = tuple(model.input.shape.as_list()[1:3])
                             img = cv2.resize(crop_img, img_shape, interpolation=cv2.INTER_AREA)
