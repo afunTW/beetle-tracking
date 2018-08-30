@@ -1,14 +1,7 @@
-import json
 import logging
 import sys
 from datetime import datetime
 from functools import wraps
-
-import numpy as np
-
-import cv2
-from tqdm import tqdm
-from src.structure import BBox
 
 LOGGER = logging.getLogger(__name__)
 

@@ -21,9 +21,11 @@ def argparser():
     parser.add_argument('-c', '--config', dest='config', default='config/default.json')
     parser.add_argument('-m', '--mouse', dest='mouse_contours')
     parser.add_argument('--from', dest='from_idx', default=0, type=int)
-    parser.add_argument('--show-video', dest='show_video', action='store_true', help='show video with cv2')
+    parser.add_argument('--show-video', dest='show_video', action='store_true', \
+                        help='show video with cv2')
     parser.add_argument('--no-show-video', dest='show_video', action='store_false')
-    parser.add_argument('--save-video', dest='save_video', action='store_true', help='save video with given name')
+    parser.add_argument('--save-video', dest='save_video', action='store_true', \
+                        help='save video with given name')
     parser.add_argument('--no-save-video', dest='save_video', action='store_false')
     parser.add_argument('--pause', dest='pause', action='store_true')
     parser.add_argument('--no-pause', dest='pause', action='store_false')

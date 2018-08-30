@@ -1,11 +1,8 @@
 import argparse
 import logging
 import os
-import sys
 from copy import deepcopy
-from datetime import datetime
 from pathlib import Path
-from pprint import pprint
 
 import cv2
 import numpy as np
@@ -13,6 +10,8 @@ import tensorflow as tf
 from keras import backend as K
 from keras.models import load_model
 from tqdm import tqdm
+
+from src.utils import func_profile, log_handler
 
 
 def argparser():
@@ -23,40 +22,14 @@ def argparser():
     parser.add_argument('-m', '--models', dest='models', required=True, nargs='+')
     return parser
 
-def log_handler(*loggers, logname=None):
-    formatter = logging.Formatter(
-        '%(asctime)s %(filename)12s:L%(lineno)3s [%(levelname)8s] %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S')
-
-    # stream handler
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setLevel(logging.INFO)
-    sh.setFormatter(formatter)
-
-    # file handler
-    if logname:
-        fh = logging.FileHandler(logname)
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-
-    for logger in loggers:
-        if logname:
-            logger.addHandler(fh)
-        logger.addHandler(sh)
-        logger.setLevel(logging.DEBUG)
-
 def focal_loss(gamma=2, alpha=2):
     def focal_loss_fixed(y_true, y_pred):
-        if(K.backend()=="tensorflow"):
-            import tensorflow as tf
+        if K.backend() == "tensorflow":
             pt = tf.where(tf.equal(y_true, 1), y_pred, 1 - y_pred)
-            return -K.sum(alpha * K.pow(1. - pt, gamma) * K.log(pt))
-        if(K.backend()=="theano"):
-            import theano.tensor as T
-            pt = T.where(T.eq(y_true, 1), y_pred, 1 - y_pred)
             return -K.sum(alpha * K.pow(1. - pt, gamma) * K.log(pt))
     return focal_loss_fixed
 
+@func_profile
 def main(args):
     logger = logging.getLogger(__name__)
     log_handler(logger)
@@ -83,7 +56,7 @@ def main(args):
         model = load_model(model_path, custom_objects={'focal_loss_fixed': focal_loss(2, 2)})
         y_preds[model_path] = []
 
-        for record_idx, record in enumerate(tqdm(bbox_results)):
+        for record in tqdm(bbox_results):
             frame_idx, bboxes = record
             model_predict_bbox = deepcopy(bboxes)
             cap.set(1, frame_idx-1)
@@ -91,8 +64,8 @@ def main(args):
             if success:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 for bbox_idx, bbox in enumerate(model_predict_bbox):
-                    y1, x1, y2, x2, prob = *list(map(int, bbox[:4])), bbox[-1]
-                    y1, x1, y2, x2, prob = *list(map(lambda x: max(x, 0), (y1, x1, y2, x2))), bbox[-1]
+                    y1, x1, y2, x2 = *list(map(int, bbox[:4]))
+                    y1, x1, y2, x2 = *list(map(lambda x: max(x, 0), (y1, x1, y2, x2)))
                     crop_img = frame[y1:y2, x1:x2, ...]
                     img_shape = tuple(model.input.shape.as_list()[1:3])
                     img = cv2.resize(crop_img, img_shape, interpolation=cv2.INTER_AREA)
@@ -121,9 +94,12 @@ def main(args):
             merge_bboxes = []
 
             for bbox_idx, bbox in enumerate(bboxes):
-                y_pred = np.array([[v[idx][-1][bbox_idx][-1][k] for v in y_preds.values()] for k in bbox[-1].keys()])
+                y_pred = np.array([ \
+                    [v[idx][-1][bbox_idx][-1][k] for v in y_preds.values()] \
+                    for k in bbox[-1].keys()])
                 y_pred = np.average(y_pred, axis=-1)
-                merge_bboxes.append([*bbox[:-1], {k: y_pred[idx] for idx, k in enumerate(bbox[-1].keys())}])
+                merge_bboxes.append([*bbox[:-1], \
+                                    {k: y_pred[idx] for idx, k in enumerate(bbox[-1].keys())}])
             
             f.write(str([frame_idx, merge_bboxes]))
             if idx != len(reference_result)-1:
@@ -133,5 +109,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparser()
-    main(parser.parse_args())
+    main(argparser().parse_args())

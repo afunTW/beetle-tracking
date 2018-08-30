@@ -1,16 +1,15 @@
 import argparse
 import json
 import logging
-import sys
 from pathlib import Path
 
 import pandas as pd
 
 import cv2
-from src.build import build_flow
-from src.utils import *
-from src.visualize import show_and_save_video
 from tqdm import tqdm
+from src.build import build_flow
+from src.utils import log_handler, func_profile, bbox_behavior_encoding
+from src.visualize import show_and_save_video
 
 LOGGERS = [
     logging.getLogger('src.utils'),
@@ -23,9 +22,11 @@ def argparser():
     parser.add_argument('-i', '--input', dest='input', required=True, help='classification result')
     parser.add_argument('-c', '--config', dest='config', default='config/default.json')
     parser.add_argument('--from', dest='from_idx', default=0, type=int)
-    parser.add_argument('--show-video', dest='show_video', action='store_true', help='show video with cv2')
+    parser.add_argument('--show-video', dest='show_video', action='store_true', \
+                        help='show video with cv2')
     parser.add_argument('--no-show-video', dest='show_video', action='store_false')
-    parser.add_argument('--save-video', dest='save_video', action='store_true', help='save video with given name')
+    parser.add_argument('--save-video', dest='save_video', action='store_true', \
+                        help='save video with given name')
     parser.add_argument('--no-save-video', dest='save_video', action='store_false')
     parser.add_argument('--output-video', dest='outvideo', default='track.avi')
     parser.add_argument('--pause', dest='pause', action='store_true')
@@ -81,7 +82,8 @@ def main(args):
     df_paths.to_csv(path_savepath, index=False)
 
     # save mouse contours
-    mouse_cnts_filepath = str(Path(args.video).parent / '{}_mouse.json'.format(Path(args.video).stem))
+    mouse_filename = '{}_mouse.json'.format(Path(args.video).stem)
+    mouse_cnts_filepath = str(Path(args.video).parent / mouse_filename)
     mouse_cnts = {
         str(m.frame_idx): {
             'contour': m.contour.tolist(),
@@ -110,5 +112,4 @@ def main(args):
                                 pause_flag=args.pause)
 
 if __name__ == '__main__':
-    parser = argparser()
-    main(parser.parse_args())
+    main(argparser().parse_args())

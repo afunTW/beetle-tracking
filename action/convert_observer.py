@@ -1,19 +1,15 @@
 import argparse
 import datetime
 import logging
-import os
 import sys
 from pathlib import Path
-from pprint import pprint
 
-import numpy as np
 import pandas as pd
 
 import cv2
-from tqdm import tqdm
 
-src = Path(__file__).resolve().parents[1]
-sys.path.append(str(src))
+SRC_PATH = Path(__file__).resolve().parents[1]
+sys.path.append(str(SRC_PATH))
 from src.utils import func_profile, log_handler
 
 
@@ -65,7 +61,6 @@ def main(args):
     
     observer_filepath = Path(args.observer)
     paths_filepath = Path(args.paths)
-    fixed_video_name = str(paths_filepath.parent).split(os.sep)[-1]
     fixed_observer_savepath = paths_filepath.parent / 'fixed_observer.csv'
 
     # get fps from video
@@ -83,7 +78,9 @@ def main(args):
                                'Modifier_1',
                                'Event_Type']]
     df_observer = df_observer.dropna(subset=['Modifier_1'])
-    df_observer.columns = ['timestamp_hmsf', 'duration', 'subject', 'behavior', 'target', 'event_type']
+    df_observer.columns = [ \
+        'timestamp_hmsf', 'duration', 'subject', \
+        'behavior', 'target', 'event_type']
     df_observer['label'] = df_observer.apply(lambda row: row['subject'].split(' ')[-1], axis=1)
     df_observer['timestamp_hmsf'] = pd.to_datetime(df_observer['timestamp_hmsf'])
     df_observer['timestamp_hmsf'] = [t.time() for t in df_observer['timestamp_hmsf']]
@@ -92,13 +89,15 @@ def main(args):
 
     # padding the records in duration
     df_padding_event = df_observer.copy().reset_index(drop=True)
-    df_padding_event['frame_idx'] = df_padding_event.apply(lambda x: hmsf_to_idx(x['timestamp_hmsf'], fps), axis=1)
-    action_segment = []
+    df_padding_event['frame_idx'] = df_padding_event.apply( \
+        lambda x: hmsf_to_idx(x['timestamp_hmsf'], fps), axis=1)
     for index, row in df_observer.iterrows():
         if row['event_type'] == 'State start':
             logger.info('From row {:02} - {}'.format(index, row.tolist()))
             for end_index, end_row in df_observer.loc[index+1:, ].iterrows():
-                check_same_event = end_row['subject': 'target'].tolist() == row['subject': 'target'].tolist()
+                check_end_row = end_row['subject': 'target'].tolist()
+                check_row = row['subject': 'target'].tolist()
+                check_same_event = (check_end_row == check_row)
                 check_same_event = check_same_event and end_row['event_type'] == 'State stop'
                 if check_same_event:
     
@@ -121,7 +120,8 @@ def main(args):
                         'label': [row['label']]*len(ts)
                     }
                     df_ts = pd.DataFrame(data=ts_data)
-                    df_ts['frame_idx'] = df_ts.apply(lambda x: hmsf_to_idx(x['timestamp_hmsf'], fps), axis=1)
+                    df_ts['frame_idx'] = df_ts.apply( \
+                        lambda x: hmsf_to_idx(x['timestamp_hmsf'], fps), axis=1)
                     df_ts.drop_duplicates(subset=['frame_idx'], keep='first', inplace=True)
                     df_padding_event = pd.concat([df_padding_event, df_ts], sort=False)
                     logger.info('To row {:02} - {}\n{}'.format(end_index, end_row.tolist(), '-'*87))

@@ -111,3 +111,4 @@ output/
 output
 classification
 detection
+.pylintrc

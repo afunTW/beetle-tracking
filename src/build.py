@@ -1,4 +1,3 @@
-import copy
 import json
 import logging
 from multiprocessing import Pool, cpu_count
@@ -6,10 +5,10 @@ from multiprocessing import Pool, cpu_count
 import numpy as np
 
 import cv2
-from src.match import hungarian_matching
-from src.structure import *
-from src.utils import func_profile
 from tqdm import tqdm
+from src.match import hungarian_matching
+from src.structure import BBox, Frame, TrackBlock, TrackFlow, Mouse
+from src.utils import func_profile
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ def _binary_search_less_equal_number(seq, n):
         seq {[list]} -- list of integer
         n {[int]} -- target number to compare
     """
-    if not len(seq) or n is None:
+    if not seq or n is None:
         return -1
     if n < seq[0]:
         return 0
@@ -89,7 +88,8 @@ def _interpolate_mouse_contour_in_timeline(video: str,
         mouse_contours.insert(mouse_idx+1, mouse)
     
     _after_number_of_mouse = len(mouse_contours)
-    LOGGER.info('Number of mouse from {} to {}'.format(_before_number_of_mouse, _after_number_of_mouse))
+    LOGGER.info('Number of mouse from {} to {}'.format(
+        _before_number_of_mouse, _after_number_of_mouse))
     LOGGER.debug('{}'.format([i.frame_idx for i in mouse_contours]))
     return mouse_contours
 
@@ -97,15 +97,16 @@ def calculate_mouse_contour(video: str, frame_idx: int, kernel_size: list):
     cap = cv2.VideoCapture(video)
     cap.set(1, frame_idx)
     success, frame = cap.read()
-    mouse = Mouse()
-    mouse.update_by_frame_idx(frame_idx, frame, kernel_size)
+    if success:
+        mouse = Mouse()
+        mouse.update_by_frame_idx(frame_idx, frame, kernel_size)
     cap.release()
     return mouse
 
 def check_on_mouse(trackflow, mouse_contours):
     try:
         _mouse_frame_indexes = [mouse.frame_idx for mouse in mouse_contours]
-        for label, flow in trackflow.paths.items():
+        for flow in trackflow.paths.values():
             for bbox in flow:
                 mouse_idx = _binary_search_less_equal_number(_mouse_frame_indexes, bbox.frame_idx)
                 mouse = mouse_contours[mouse_idx]
@@ -116,7 +117,7 @@ def check_on_mouse(trackflow, mouse_contours):
         LOGGER.exception(e)
 
 @func_profile
-def build_flow(video:str, filename: str, config: str):
+def build_flow(video: str, filename: str, config: str):
     with open(filename, 'r') as f:
         records = f.readlines()
         records = list(map(eval, records))
@@ -127,8 +128,8 @@ def build_flow(video:str, filename: str, config: str):
         # multiprocess to pre-calculate mouse contour
         cap = cv2.VideoCapture(video)
         total_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        args = zip([video]*total_frame,
-                    range(0, total_frame, config['mouse_cnts_per_nframe']),
+        args = zip([video]*total_frame, \
+                    range(0, total_frame, config['mouse_cnts_per_nframe']), \
                     [config['mouse_cnts_dilate_kernel_size']]*total_frame)
         cap.release()
         LOGGER.info('System total cpu count: {}'.format(cpu_count()))
@@ -190,10 +191,11 @@ def build_flow(video:str, filename: str, config: str):
         # detect behavior
         mouse_contours = mouse_contours.get()
         mouse_contours = sorted(mouse_contours, key=lambda x: x.frame_idx)
-        mouse_contours = _interpolate_mouse_contour_in_timeline(video,
-                                                                config['mouse_cnts_dilate_kernel_size'],
-                                                                mouse_contours,
-                                                                config['mouse_center_shift_boundary'])
+        mouse_contours = _interpolate_mouse_contour_in_timeline( \
+                            video, \
+                            config['mouse_cnts_dilate_kernel_size'], \
+                            mouse_contours, \
+                            config['mouse_center_shift_boundary'])
         # final result
         trackflow = TrackFlow(reference_bbox.multiclass_result.keys())
         LOGGER.info('Build TrackFlow with {} block'.format(len(tracker_blocks)))
@@ -202,7 +204,7 @@ def build_flow(video:str, filename: str, config: str):
             if len(block.bboxes) > config['block_length_threshold'] and \
             block.confidence > config['block_scroe_threshold']:
                 trackflow.append_block(block.label, block)
-        for k, v in trackflow.blocks.items():
+        for v in trackflow.blocks.values():
             v = sorted(v, key=lambda x: x.head.frame_idx)
             for block in v:
                 for bbox in block.bboxes:

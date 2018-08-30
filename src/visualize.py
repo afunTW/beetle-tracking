@@ -1,12 +1,10 @@
-import json
 import logging
-from functools import wraps
 
 import pandas as pd
 
 import cv2
-from src.structure import BBox
 from tqdm import tqdm
+from src.structure import BBox
 
 LOGGER = logging.getLogger(__name__)
 
@@ -64,7 +62,7 @@ def _convert_to_bboxes(records):
     data = []
     for record in tqdm(records):
         frame_idx, bboxes = record
-        for bbox_idx, bbox in enumerate(bboxes):
+        for bbox in bboxes:
             multiclass_result = None
             if isinstance(bbox[-1], dict) and len(bbox) == 6:
                 multiclass_result = bbox[-1]
@@ -127,27 +125,33 @@ def _convert_action(df):
             t_row = df.loc[(df.frame_idx == row['frame_idx']) & (df.label == row['target_label'])]
             if not t_row.empty:
                 # data preprocess and check whether available
-                t_row = t_row.reset_index(drop=True).loc[0,:].fillna('')
+                t_row = t_row.reset_index(drop=True).loc[0, :].fillna('')
                 if t_row['label'] in _checked_in_group:
                     continue
 
                 # preprare data and append
-                subject_pt1, subject_pt2 = (row['pt1.x'], row['pt1.y']), (row['pt2.x'], row['pt2.y'])
-                target_pt1, target_pt2 = (t_row['pt1.x'], t_row['pt1.y']), (t_row['pt2.x'], t_row['pt2.y'])
-                merge_pt1, merge_pt2 = _merge_bbox(subject_pt1, subject_pt2, target_pt1, target_pt2)
+                subject_pt1 = (row['pt1.x'], row['pt1.y'])
+                subject_pt2 = (row['pt2.x'], row['pt2.y'])
+                target_pt1 = (t_row['pt1.x'], t_row['pt1.y'])
+                target_pt2 = (t_row['pt2.x'], t_row['pt2.y'])
+                merge_pt1, merge_pt2 = _merge_bbox( \
+                    subject_pt1, subject_pt2, target_pt1, target_pt2)
                 subject_center = (row['center.x'], row['center.y'])
                 target_center = (t_row['center.x'], t_row['center.y'])
 
                 # message
                 event_state = row['event_type'].split(' ')[-1]
-                msg = '{} {} {} - {}'.format(row['label'], row['behavior'], row['target_label'], event_state)
+                msg = '{} {} {} - {}'.format( \
+                    row['label'], row['behavior'], row['target_label'], event_state)
                 if 'behavior' in t_row and t_row['behavior']:
                     target_label = t_row['target'].split(' ')[-1]
                     event_state = t_row['event_type'].split(' ')[-1]
-                    msg += '\n{} {} {} - {}'.format(t_row['label'], t_row['behavior'], target_label, event_state)
+                    msg += '\n{} {} {} - {}'.format( \
+                        t_row['label'], t_row['behavior'], target_label, event_state)
 
                 data.append([
-                    row['frame_idx'], row['action_idx'], *merge_pt1, *merge_pt2, *subject_center, *target_center,
+                    row['frame_idx'], row['action_idx'],
+                    *merge_pt1, *merge_pt2, *subject_center, *target_center,
                     row['label'], row['behavior'], row['target_label'], msg
                 ])
                 _checked_in_group += [row['label'], row['target_label']]
@@ -231,7 +235,7 @@ def show_and_save_video(video, records, config,
     # check mouse
     current_ref_mouse_idx, mouse_idx = None, None
     if isinstance(mouse_contours, dict):
-        mouse_idx = sorted(mouse_contours.keys(), key=lambda x: int(x))
+        mouse_idx = sorted(map(int, mouse_contours.keys()))
         mouse_idx = list(map(str, mouse_idx))
         current_ref_mouse_idx = mouse_idx[0]
 
@@ -260,7 +264,7 @@ def show_and_save_video(video, records, config,
         
         # draw beetle
         groupby_col = 'block_idx' if 'block_idx' in records else None
-        iter_df = (groupby_col and df_candidate.groupby(groupby_col)) or None
+        iter_df = df_candidate.groupby(groupby_col) if groupby_col else None
         iter_df = [('all', df_candidate)] if iter_df is None else iter_df
         text_color = (255, 255, 255)
         for name, group in iter_df:
@@ -292,12 +296,15 @@ def show_and_save_video(video, records, config,
                     cond_enable_bbox = config.get('show_highlight_on_mouse', False) and \
                                         'on_mouse' in group and int(row['on_mouse'])
                     if isinstance(center[0], int) and 'label' in row:
-                        cv2.putText(frame, row['label'], center, cv2.FONT_HERSHEY_COMPLEX, 1, label_color, 2)
+                        cv2.putText(frame, row['label'], center, \
+                            cv2.FONT_HERSHEY_COMPLEX, 1, label_color, 2)
                     elif isinstance(center[0], tuple) and 'label' in row and 'target_label' in row:
                         color1 = _get_label_color(row['label'])
                         color2 = _get_label_color(row['target_label'])
-                        cv2.putText(frame, row['label'], center[0], cv2.FONT_HERSHEY_COMPLEX, 1, color1, 2)
-                        cv2.putText(frame, row['target_label'], center[1], cv2.FONT_HERSHEY_COMPLEX, 1, color2, 2)
+                        cv2.putText(frame, row['label'], center[0], \
+                            cv2.FONT_HERSHEY_COMPLEX, 1, color1, 2)
+                        cv2.putText(frame, row['target_label'], center[1], \
+                            cv2.FONT_HERSHEY_COMPLEX, 1, color2, 2)
                     if config.get('show_bbox', False) or cond_enable_bbox:
                         cv2.rectangle(frame, pt1, pt2, label_color, 2)
                     
@@ -308,7 +315,8 @@ def show_and_save_video(video, records, config,
                             show_x, show_y = pt1
                             show_y -= lid*15 + 5
                             show_pts = (show_x, show_y)
-                            cv2.putText(frame, msg, show_pts, cv2.FONT_HERSHEY_COMPLEX, 0.5, label_color, 1)
+                            cv2.putText(frame, msg, show_pts, \
+                                cv2.FONT_HERSHEY_COMPLEX, 0.5, label_color, 1)
     
         # show frame information
         pause_msg = 'PAUSE' if pause_flag else ''

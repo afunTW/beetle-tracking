@@ -1,13 +1,13 @@
 import logging
 from collections import Counter
-from itertools import combinations, count
+from itertools import count
 
 import numpy as np
 
 import cv2
 
 
-class BBox(object):
+class BBox():
     def __init__(self, frame_idx, pt1, pt2, confidence, multiclass_result):
         # attribute
         self._multiclass_result = multiclass_result
@@ -67,7 +67,7 @@ class BBox(object):
 
         return iou
 
-class Frame(object):
+class Frame():
     def __init__(self, frame_idx, bboxes):
         self.frame_idx = frame_idx
         self.bboxes = bboxes
@@ -79,7 +79,7 @@ class Frame(object):
     def bbox_count(self):
         return len(self.bboxes)
 
-class TrackBlock(object):
+class TrackBlock():
     _ids = count(0)
     def __init__(self, *bboxes):
         self.block_id = next(self._ids)
@@ -141,7 +141,7 @@ class TrackBlock(object):
     def vote_for_label(self):
         labels = [b.classification_label[0] for b in self.bboxes]
         counter = Counter(labels)
-        self._label, self._num_true_label_bboxes = counter.most_common(1)[0]
+        self._label, num_true_label_bboxes = counter.most_common(1)[0]
         return self._label
     
     def extract(self):
@@ -153,7 +153,7 @@ class TrackBlock(object):
         self.bboxes = bboxes
         return bboxes
 
-class TrackFlow(object):
+class TrackFlow():
     def __init__(self, reference_keys):
         self._ref_keys = reference_keys
         self._blocks = {k: [] for k in reference_keys}
@@ -191,14 +191,14 @@ class TrackFlow(object):
         if score1 >= score2:
             merge_frame_idx = block1.bboxes[-1].frame_idx
             bboxes = [b for b in block1.bboxes if b.frame_idx <= merge_frame_idx]
-            bboxes += [b for b in block2.bboxes if b.frame_idx > merge_frame_idx]    
+            bboxes += [b for b in block2.bboxes if b.frame_idx > merge_frame_idx] 
         else:
             merge_frame_idx = block2.bboxes[0].frame_idx
             bboxes = [b for b in block1.bboxes if b.frame_idx < merge_frame_idx]
             bboxes += [b for b in block2.bboxes if b.frame_idx >= merge_frame_idx]
         
         new_block = None
-        for bid, bbox in enumerate(bboxes):
+        for bbox in bboxes:
             if not new_block:
                 new_block = TrackBlock(bbox)
             else:
@@ -212,7 +212,8 @@ class TrackFlow(object):
         break_index = break_index.get(break_on, None)
 
         if break_index is None:
-            self.logger.exception('Block seperating should be intersected or break on right or left')
+            self.logger.exception(
+                'Block seperating should be intersected or break on right or left')
             return
 
         l_block = TrackBlock(*block.bboxes[:break_index]) if break_index > 0 else None
@@ -272,7 +273,7 @@ class TrackFlow(object):
                 self._paths[label] += block.bboxes
         self.check_update_path = True
 
-class Mouse(object):
+class Mouse():
     def __init__(self):
         # attribute
         self.frame_idx = None
@@ -311,22 +312,21 @@ class Mouse(object):
         i = 0
     
         # handle if we need to sort in reverse
-        if method == "right-to-left" or method == "bottom-to-top":
+        if method in ["right-to-left", "bottom-to-top"]:
             reverse = True
-    
+
         # handle if we are sorting against the y-coordinate rather than
         # the x-coordinate of the bounding box
-        if method == "top-to-bottom" or method == "bottom-to-top":
+        if method in ["top-to-bottom", "bottom-to-top"]:
             i = 1
     
         # construct the list of bounding boxes and sort them from top to
         # bottom
-        boundingBoxes = [cv2.boundingRect(c) for c in cnts]
-        (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
-            key=lambda b:b[1][i], reverse=reverse))
+        bboxes = [cv2.boundingRect(c) for c in cnts]
+        cnts, bboxes = zip(*sorted(zip(cnts, bboxes), key=lambda b:b[1][i], reverse=reverse))
     
         # return the list of sorted contours and bounding boxes
-        return (cnts, boundingBoxes)
+        return (cnts, bboxes)
 
     def _point_in_bbox(self, point, bbox):
         x1, y1, x2, y2 = *bbox.pt1, *bbox.pt2
@@ -349,11 +349,13 @@ class Mouse(object):
         is_frame_idx_available = frame_idx is not None and frame_idx != self.frame_idx
         if is_frame_idx_available:
             assert frame is not None and frame_idx
-            self.update_by_frame_idx(frame_idx , frame, self.contour_extend_kernel)
+            self.update_by_frame_idx(frame_idx, frame, self.contour_extend_kernel)
         
         # determine whether the bbox is touch mouse contour
         # checked == (1, 0 ,-1): (inside, on the edge, outside)
-        ## bbox_rect_pts = (bbox.pt1, bbox.pt2, (bbox.pt1[0], bbox.pt2[1]), (bbox.pt2[0], bbox.pt1[1]))
+        ## bbox_rect_pts = (bbox.pt1, bbox.pt2, \
+        ##      (bbox.pt1[0], bbox.pt2[1]), \
+        ##      (bbox.pt2[0], bbox.pt1[1]))
         ## checked = map(lambda x: cv2.pointPolygonTest(self.contour, x, False), bbox_rect_pts)
         ## checked = any(i >= 0 for i in checked)
         checked = cv2.pointPolygonTest(self.contour_extend, bbox.center, False) >= 0
