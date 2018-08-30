@@ -20,7 +20,6 @@ def argparser():
         description='recursively process the pipeline in given folder')
     parser.add_argument('-g', '--gpus', dest='gpus', help='1,2,...')
     parser.add_argument('-r', '--recursive', dest='root', help='folders with multi-video')
-    parser.add_argument('-p', '--process', dest='process', type=int, default=4)
     return parser
 
 def demo_one_video(gpu_queue: Queue, video_dirpath: PosixPath):
