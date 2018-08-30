@@ -81,7 +81,7 @@ The script will run in multithreading and get the idle GPU from the queue.
 
 ### visualization
 
-Invoke the `src.visualize.show_and_save_video` function could show the result on each frame and output a video. Support the format of *detection*, *classification*, *tracking*, *action*. Check the `visualization.py` for more detail.
+Invoke the `src.visualize.show_and_save_video` function could show the result on each frame and output a video. Support the format of *detection*, *classification*, *tracking*, *action*. Check the `utils/visualization.py` for more detail.
 
 ### multi-gpu booosting in classification
 
