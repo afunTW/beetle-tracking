@@ -1,11 +1,15 @@
 import argparse
 import json
 import logging
+import sys
 from pathlib import Path
 
 import pandas as pd
 
 import cv2
+
+SRC_PATH = Path(__file__).resolve().parents[1]
+sys.path.append(str(SRC_PATH))
 from src.utils import func_profile, log_handler
 from src.visualize import convert_to_dataframe, show_and_save_video
 
@@ -18,7 +22,7 @@ def argparser():
                         choices=['detection', 'classification', 'track', 'action'],
                         required=True)
     parser.add_argument('-i', '--input-record', dest='record', required=True)
-    parser.add_argument('-c', '--config', dest='config', default='config/default.json')
+    parser.add_argument('-c', '--config', dest='config', required=True)
     parser.add_argument('-m', '--mouse', dest='mouse_contours')
     parser.add_argument('--from', dest='from_idx', default=0, type=int)
     parser.add_argument('--show-video', dest='show_video', action='store_true', \
@@ -38,7 +42,7 @@ def main(args):
     logger = logging.getLogger(__name__)
     log_handler(logger, logging.getLogger('src.visualize'))
     logger.info(args)
-    save_video_path = Path('output/video') / args.outvideo if args.save_video else None
+    save_video_path = SRC_PATH / 'output/video' / args.outvideo if args.save_video else None
 
     with open(args.config, 'r') as f:
         config = json.load(f)['outputs']
