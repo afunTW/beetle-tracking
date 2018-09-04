@@ -38,7 +38,7 @@ def demo_one_video(gpu_queue: Queue, video_dirpath: PosixPath, action: str = '')
     video_name = video_dirpath.name
     video_path = video_dirpath / '{}.avi'.format(video_name)
     LOGGER.info('{} {} -> GPU {} for {}'.format('='*10, thread_info, gpuid, video_name))
-    call([DEMO_BASH, gpuid, video_path, action])
+    call([DEMO_BASH, gpuid, str(video_path), action])
     gpu_queue.put(gpuid)
     LOGGER.info('Complete {}'.format(thread_info))
 
