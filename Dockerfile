@@ -10,4 +10,3 @@ ENV LANG=C.UTF-8
 # Install Python dependencies by pipenv
 COPY . /root/beetle-tracking
 RUN pipenv --python python3  && pipenv lock && pipenv sync
-ENTRYPOINT pipenv shell
