@@ -24,7 +24,7 @@ def argparser():
                         help='optional argument pass to demo.bash')
     return parser
 
-def demo_one_video(gpu_queue: Queue, video_dirpath: PosixPath, action: str = None):
+def demo_one_video(gpu_queue: Queue, video_dirpath: PosixPath, action: str = ''):
     # process and gpu config
     thread_info = current_thread()
     gpuid = None
