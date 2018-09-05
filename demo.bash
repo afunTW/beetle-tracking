@@ -65,7 +65,7 @@ if [ "$3" = "action_data" ];then
     # convert observer
     if [[ -e $EXPECT_OBSERVER_FILE && \
           -e $EXPECT_PATHS_OUTPUT && \
-          ! -e $EXPECT_ACTION_OUTPUT ]];then
+          ! -e $EXPECT_ACTION_OUTPUT ]]; then
         echo "Convert observer file..."
 
         python3 action/convert_observer.py \
@@ -75,7 +75,7 @@ if [ "$3" = "action_data" ];then
     fi
 
     # generate video clips fro action training data
-    if [[ -e $EXPECT_ACTION_OUTPUT && ! -e $EXPECT_ACTION_CLIPS_OUTPUT ]];then
+    if [[ -e $EXPECT_ACTION_OUTPUT && ! -e $EXPECT_ACTION_CLIPS_OUTPUT ]]; then
         echo "Clips video for action training data..."
         python3 action/generate_video_clips.py \
         -v $VIDEO_FULLNAME \

@@ -57,10 +57,10 @@ def main(args):
 
     # multithreading
     th_jobs = []
-    th_args = zip([gpu_queue]*len(root_folders), \
-                  root_folders, \
-                  [args.option]*len(root_folders))
-    for th_args in zip([gpu_queue]*len(root_folders), root_folders):
+    all_th_args = zip([gpu_queue]*len(root_folders), \
+                      root_folders, \
+                      [args.option]*len(root_folders))
+    for th_args in all_th_args:
         job = Thread(target=demo_one_video, args=th_args)
         th_jobs.append(job)
         job.start()
