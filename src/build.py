@@ -85,7 +85,10 @@ def _interpolate_mouse_contour_in_timeline(video: str,
             continue
         
         mouse = calculate_mouse_contour(video, new_mouse_idx, kernel_size)
-        mouse_contours.insert(mouse_idx+1, mouse)
+        if mouse:
+            mouse_contours.insert(mouse_idx+1, mouse)
+        else:
+            mouse_idx += 1
     
     _after_number_of_mouse = len(mouse_contours)
     LOGGER.info('Number of mouse from {} to {}'.format(
@@ -97,11 +100,12 @@ def calculate_mouse_contour(video: str, frame_idx: int, kernel_size: list):
     cap = cv2.VideoCapture(video)
     cap.set(1, frame_idx)
     success, frame = cap.read()
+    cap.release()
     if success:
         mouse = Mouse()
         mouse.update_by_frame_idx(frame_idx, frame, kernel_size)
-    cap.release()
-    return mouse
+        return mouse
+    return
 
 def check_on_mouse(trackflow, mouse_contours):
     try:
@@ -190,6 +194,7 @@ def build_flow(video: str, filename: str, config: str):
         
         # detect behavior
         mouse_contours = mouse_contours.get()
+        mouse_contours = [m for m in mouse_contours if m]
         mouse_contours = sorted(mouse_contours, key=lambda x: x.frame_idx)
         mouse_contours = _interpolate_mouse_contour_in_timeline( \
                             video, \
