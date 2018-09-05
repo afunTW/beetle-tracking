@@ -64,6 +64,12 @@ $ python3 main.py \
 --no-show-video --no-save-video
 ```
 
+## Docker
+
+Available to apply in docker, run `docker pull afun/beetle-tracking` to get the image, the environment use `pipenv` to manage the python dependencies, remember to activate by `pipenv shell` in docker image.
+
+> https://hub.docker.com/r/afun/beetle-tracking/ 
+
 ## More Functionality
 
 ### demo in batch
