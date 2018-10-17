@@ -52,8 +52,10 @@ def main(args):
     trackflow = build_flow(args.video, args.input, args.config)
 
     # get timestamp and save path to file
+    video_filename = str(Path(args.video).stem)
     cap = cv2.VideoCapture(args.video)
     fps = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
     cap.release()
 
     trackflow_all_label = []
@@ -64,6 +66,7 @@ def main(args):
             bbox.timestamp = bbox.frame_idx / fps * 1000
             label_score = [bbox.multiclass_result.get(l, None) for l in label_col]
             trackflow_all_label.append([
+                video_filename, fps, total_frames,
                 bbox.frame_idx, bbox.block_id, bbox.timestamp, label,
                 bbox.confidence, *label_score, bbox.block_confidence,
                 *bbox.pt1, *bbox.pt2, *bbox.center,
@@ -73,6 +76,7 @@ def main(args):
     trackflow_all_label = sorted(trackflow_all_label, key=lambda x: x[0])
     label_col = ['{}_score'.format(l) for l in label_col]
     trackflow_cols = [
+        'video_name', 'video_fps', 'video_nframes',
         'frame_idx', 'block_idx', 'timestamp_ms', 'label',
         'detect_score', *label_col, 'block_score',
         'pt1.x', 'pt1.y', 'pt2.x', 'pt2.y', 'center.x', 'center.y', 'on_mouse'

@@ -46,6 +46,7 @@ def main(args):
         if not clip_savepath.exists():
             clip_savepath.mkdir(parents=True)
         df_tmp.to_csv(clip_savepath / 'action_paths.csv', index=False)
+        df_tmp_fixed.to_csv(clip_savepath / 'action_paths_fixed.csv', index=False)
 
         # save clips images
         for row_idx, row in df_tmp_fixed.iterrows():
