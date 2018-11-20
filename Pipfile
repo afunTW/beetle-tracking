@@ -4,19 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-numpy = "==1.14.5"
+numpy = "*"
 tqdm = "*"
 munkres = "*"
 opencv-python = "*"
 pandas = "*"
-tensorflow-gpu = "==1.10.1"
-keras = "==2.2.2"
 
 [dev-packages]
-ipython = "*"
 better-exceptions = "*"
 pylint = "*"
-jupyter = "*"
 
 [requires]
 python_version = "3.5"

@@ -1,0 +1,9 @@
+-i https://pypi.org/simple
+munkres==1.0.12
+numpy==1.15.4
+opencv-python==3.4.3.18
+pandas==0.23.4
+python-dateutil==2.7.5
+pytz==2018.7
+six==1.11.0
+tqdm==4.28.1
