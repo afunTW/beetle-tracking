@@ -16,3 +16,4 @@ RUN /bin/bash /root/project/setup.bash
 
 # support jupyter
 RUN pip3 install jupyter jupyterhub
+ENTRYPOINT ["jupyter", "notebook", "--ip=0.0.0.0", "--no-browser"]
