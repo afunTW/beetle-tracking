@@ -10,7 +10,8 @@ if [ ! -d "detection" ]; then
 	echo "Can't find the detection folder, clone from github..."
 	git clone $GITHUB_DETECTION detection
 	cd detection && pipenv --python=python2.7 && pipenv sync
-	cd utils && make && deactivate && cd ..
+	source $(pipenv --venv)/bin/activate
+	cd utils && make && deactivate && cd ../..
 fi
 if [ ! -d "classification" ]; then
 	echo "Can't find the classification folder, clone from github..."
