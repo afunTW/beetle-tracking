@@ -1,4 +1,4 @@
-FROM afun/cuda:cuda9-cudnn7-py35-py27
+FROM asgpu/notebook:tf-1.10-9d4973b6
 LABEL maintainer=afun@afun.tw
 SHELL ["/bin/bash", "-c"]
 WORKDIR /root/project
