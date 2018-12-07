@@ -29,7 +29,7 @@ if [[ ! -e $EXPECT_DETECT_OUTPUT ]];then
     --gpu $GPU_ID \
     --weights ../models/detection/lstm_resnet_beetle_rezoom/save.ckpt-1300000 \
     --video-root $VIDEO_DIRNAME \
-    --video-type $VIDEO_EXT
+    --video-type $VIDEO_EXT \
     --output-dir $VIDEO_OUTPUTDIR
     deactivate && cd ..
 fi

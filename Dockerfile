@@ -1,18 +1,20 @@
 FROM asgpu/notebook:tf-1.10-9d4973b6
 LABEL maintainer=afun@afun.tw
 SHELL ["/bin/bash", "-c"]
-WORKDIR /root/project
 
 # Set locale
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-# packing project code and model into image
-COPY . /root/project
-RUN /bin/bash download_data.bash
-RUN apt-get install -y libglib2.0-0 libsm6 libxrender-dev
-RUN /bin/bash download_data.bash
-RUN /bin/bash /root/project/setup.bash
+# root env
+USER root
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl htop python-dev python3-dev apt-utils pkgconf \
+        python2.7 python-setuptools python-pip git vim && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# support jupyter
-RUN pip3 install jupyter jupyterhub
+# user env
+USER $NB_UID
+ENV PATH=$PATH:~/.local/bin
+RUN pip install pipenv

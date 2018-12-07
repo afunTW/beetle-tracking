@@ -58,7 +58,10 @@ def main(args):
     # prepare arguments
     root_path = Path(args.root)
     outdir = Path(args.outdir)
-    root_folders = [i for i in root_path.iterdir() if i.is_dir()]
+    
+    root_folders = list(root_path.glob('./**/*.avi'))
+    root_folders = [i.parent for i in root_folders]
+
     gpu_queue = Queue()
     for i in gpu_candidate:
         gpu_queue.put(i)
@@ -69,6 +72,7 @@ def main(args):
                       root_folders, \
                       [outdir]*len(root_folders), \
                       [args.option]*len(root_folders))
+
     for th_args in all_th_args:
         job = Thread(target=demo_one_video, args=th_args)
         th_jobs.append(job)
