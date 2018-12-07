@@ -21,6 +21,7 @@ def argparser():
     parser.add_argument('-v', '--video', dest='video', required=True)
     parser.add_argument('-i', '--input', dest='input', required=True, help='classification result')
     parser.add_argument('-c', '--config', dest='config', default='config/default.json')
+    parser.add_argument('-o', '--output-dir', dest='outdir', default='outputs')
     parser.add_argument('--from', dest='from_idx', default=0, type=int)
     parser.add_argument('--show-video', dest='show_video', action='store_true', \
                         help='show video with cv2')
@@ -38,8 +39,8 @@ def argparser():
 @func_profile
 def main(args):
     logdir = Path('logs')
-    outdir = Path('output')
-    trackpath_dir = outdir / 'path' / Path(args.video).stem
+    outdir = Path(args.outdir)
+    trackpath_dir = outdir / Path(args.video).stem
     if not logdir.exists():
         logdir.mkdir(parents=True)
     if not trackpath_dir.exists():
@@ -87,7 +88,7 @@ def main(args):
 
     # save mouse contours
     mouse_filename = '{}_mouse.json'.format(Path(args.video).stem)
-    mouse_cnts_filepath = str(Path(args.video).parent / mouse_filename)
+    mouse_cnts_filepath = str(trackpath_dir / mouse_filename)
     mouse_cnts = {
         str(m.frame_idx): {
             'contour': m.contour.tolist(),
@@ -102,10 +103,7 @@ def main(args):
     # show and/or save video
     video_savepath = None
     if args.save_video:
-        videodir = outdir / 'video'
-        if not videodir.exists():
-            videodir.mkdir(parents=True)
-        video_savepath = str(videodir/args.outvideo) if args.outvideo else None
+        video_savepath = str(trackpath_dir / args.outvideo)
     if args.show_video or args.save_video:
         with open(args.config, 'r') as f:
             config = json.load(f)
