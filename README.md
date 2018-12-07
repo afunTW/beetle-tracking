@@ -1,9 +1,22 @@
 # beetle-tracking
+
+
+[![](https://img.shields.io/badge/licence-MIT-green.svg)](LICENSE)
+![](https://img.shields.io/badge/python-2.7%20%7C%203.5-blue.svg)
+------------------------------------------------------------------------
+
 Using Tracking-by-Detection and Multi-classification to track and identify each beetle path
 
 ![tracking-demo](track.gif)
 
 ## Installing
+
+### Requirement
+
+- Ubuntu 16.04
+- CUDA 9
+
+### pipenv
 
 Clone the project and run the setup script to check the package dependency. Shell script will download the site-project [TensorBox](https://github.com/afunTW/TensorBox) and [keras-transfer-workflow](https://github.com/afunTW/keras-transfer-workflow).
 
@@ -12,7 +25,7 @@ Clone the project and run the setup script to check the package dependency. Shel
 
 ```
 $ git clone https://github.com/afunTW/keras-transfer-workflow
-$ ./setup.bash
+$ ./setup.bash # setup by pipenv
 ```
 
 Moreover, you can execute the download script to get the pre-trained models from [TensorBox](https://github.com/Russell91/TensorBox) and [keras-transfer-workflow](https://github.com/afunTW/keras-transfer-workflow) for beetle project.
@@ -21,9 +34,17 @@ Moreover, you can execute the download script to get the pre-trained models from
 $ ./download_data.bash
 ```
 
+### docker
+
+Available to apply with [docker](https://hub.docker.com/r/afun/beetle-tracking/), then use the above script `setup.bash` to deploy as well.
+
+```
+docker pull afun/beetle-tracking
+```
+
 ## Running
 
-If you are going to apply a new dataset, please refer to the related repository. The following instruction only writes up the process of inference model by given video and pre-trained model where you can download by `download_data.bash`. Or, you can browse the `demo.bash` to check the whould pipeline.
+If you are going to apply a new dataset, please refer to the related repository. The following instruction only writes up the process of inference model by given video and pre-trained model where you can download by `download_data.bash`. Check up the `demo.bash` for more detail.
 
 ### Step 1: Inference Detection Model
 
@@ -35,7 +56,8 @@ $ python generate_bbox.py \
 --gpu 0 \
 --weights ../models/detection/lstm_resnet_beetle_rezoom/save.ckpt-1300000 \
 --video-root ../data/demo/ \
---video-type avi
+--video-type avi \
+--output-dir ../outputs
 ```
 
 ### Step 2: Inference Multiclass-Classification Model
@@ -47,13 +69,13 @@ It's available to pass multiple models in `--models` parameter, but I use the pr
 $ python3 ensemble_predicts.py \
 --gpu 0 \
 --video data/demo/demo.avi \
---input data/demo/demo_detection.txt \
+--input outputs/demo/demo_detection.txt \
 --models models/classification/resnet.h5
 ```
 
 ### Step 3: Apply Tracking Algorithm
 
-With that information we got in the above instruction, `main.py` in this repo apply the Hungarian matching algorithm and some constraint for this specific experiment to get the tracking path. At the end, the final output will place at `beetle-tracking/output/path/*.csv`, and you might get the extra video at `beetle-tracking/output/video/*.avi` if you pass the `--output-video` parameter.
+With that information we got in the above instruction, `main.py` in this repo apply the Hungarian matching algorithm and some constraint for this specific experiment to get the tracking path. At the end, the final output will place at `beetle-tracking/outputs/VIDEO_NAME/path.csv`, and you might get the extra video at `beetle-tracking/outputs/VIDEO_NAME/track.avi` if you pass the `--output-video` parameter.
 
 ```
 # make sure to run the script under beetle-tracking virtualenv
@@ -62,13 +84,7 @@ $ python3 main.py \
 --input data/demo/demo_ensemble.txt \
 --config config/default.json \
 --no-show-video --no-save-video
-```
-
-## Docker
-
-Available to apply in docker, run `docker pull afun/beetle-tracking` to get the image, the environment use `pipenv` to manage the python dependencies, remember to activate by `pipenv shell` in docker image.
-
-> https://hub.docker.com/r/afun/beetle-tracking/ 
+``` 
 
 ## More Functionality
 
@@ -80,7 +96,7 @@ Refer to `utils/demo_in_batch.py`, you can generate the data in batch for action
 $ python3 utils/demo_in_batch.py \
 --gpus 0,1,2,3 \
 --recursive data/ \ 
---option action_data
+--outputdir outputs/
 ```
 
 The script will run in multithreading and get the idle GPU from the queue.
