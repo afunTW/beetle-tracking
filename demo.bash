@@ -58,7 +58,7 @@ if [[ -e $EXPECT_DETECT_OUTPUT && \
 fi
 
 # optional: generate action data or predict action
-if [ "$3" = "action_data" ];then
+if [ "$4" = "action_data" ];then
     
     # convert observer
     if [[ -e $EXPECT_OBSERVER_FILE && \
