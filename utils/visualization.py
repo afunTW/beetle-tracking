@@ -42,7 +42,9 @@ def main(args):
     logger = logging.getLogger(__name__)
     log_handler(logger, logging.getLogger('src.visualize'))
     logger.info(args)
-    save_video_path = SRC_PATH / 'output/video' / args.outvideo if args.save_video else None
+    record_path = Path(args.record)
+    save_video_path = record_path.parent / f'{record_path.stem}_{args.options}.avi'
+    save_video_path = save_video_path if args.save_video else None
 
     with open(args.config, 'r') as f:
         config = json.load(f)['outputs']
