@@ -26,7 +26,7 @@ def argparser():
     return parser
 
 def demo_one_video(gpu_queue: Queue, \
-                   video_dirpath: PosixPath, \
+                   video_path: PosixPath, \
                    outdir_path: PosixPath, \
                    action: str = ''):
     # process and gpu config
@@ -39,9 +39,7 @@ def demo_one_video(gpu_queue: Queue, \
         time.sleep(random.randint(1, 10))
 
     # video infomation
-    video_name = video_dirpath.name
-    video_path = video_dirpath / '{}.avi'.format(video_name)
-    LOGGER.info('{} {} -> GPU {} for {}'.format('='*10, thread_info, gpuid, video_name))
+    LOGGER.info('{} {} -> GPU {} for {}'.format('='*10, thread_info, gpuid, video_path))
     cmd = [DEMO_BASH, gpuid, str(video_path), str(outdir_path)]
     if action:
         cmd.append(action)
@@ -58,9 +56,7 @@ def main(args):
     # prepare arguments
     root_path = Path(args.root)
     outdir = Path(args.outdir)
-    
-    root_folders = list(root_path.glob('./**/*.avi'))
-    root_folders = [i.parent for i in root_folders]
+    video_paths = list(root_path.glob('./**/*.avi'))
 
     gpu_queue = Queue()
     for i in gpu_candidate:
@@ -68,15 +64,16 @@ def main(args):
 
     # multithreading
     th_jobs = []
-    all_th_args = zip([gpu_queue]*len(root_folders), \
-                      root_folders, \
-                      [outdir]*len(root_folders), \
-                      [args.option]*len(root_folders))
+    all_th_args = zip([gpu_queue]*len(video_paths), \
+                      video_paths, \
+                      [outdir]*len(video_paths), \
+                      [args.option]*len(video_paths))
 
     for th_args in all_th_args:
         job = Thread(target=demo_one_video, args=th_args)
         th_jobs.append(job)
         job.start()
+        break
     for j in th_jobs:
         j.join()
     LOGGER.info('Complete multithread processing with pipeline ')
