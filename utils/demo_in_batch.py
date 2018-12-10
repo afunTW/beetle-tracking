@@ -73,7 +73,6 @@ def main(args):
         job = Thread(target=demo_one_video, args=th_args)
         th_jobs.append(job)
         job.start()
-        break
     for j in th_jobs:
         j.join()
     LOGGER.info('Complete multithread processing with pipeline ')
