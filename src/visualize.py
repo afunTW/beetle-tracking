@@ -224,7 +224,6 @@ def show_and_save_video(video, records, config,
     # video preprocess
     cap = cv2.VideoCapture(video)
     video_writer = None
-    pause_flag = pause_flag
     if show_video:
         cv2.namedWindow('show')
     if isinstance(save_video, str):
