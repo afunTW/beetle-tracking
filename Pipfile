@@ -10,7 +10,7 @@ munkres = "*"
 opencv-python = "*"
 pandas = "*"
 keras = "==2.2.2"
-tensorflow = "==1.10.0"
+tensorflow-gpu = "==1.10.0"
 
 [dev-packages]
 better-exceptions = "*"
