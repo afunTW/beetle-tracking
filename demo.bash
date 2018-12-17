@@ -3,8 +3,7 @@
 DATE=$(date "+%Y%m%d_%H%M%S")
 GPU_ID=$1
 VIDEO_FULLNAME=$(realpath "$2")
-VIDEO_OUTPUTDIR=$3
-: ${VIDEO_OUTPUTDIR:="outputs"}
+VIDEO_OUTPUTDIR=${3-"outputs"}
 
 VIDEO_DIRNAME=$(dirname "$VIDEO_FULLNAME")
 VIDEO_BASENAME=$(basename "$VIDEO_FULLNAME")
@@ -56,6 +55,7 @@ if [[ -e $EXPECT_DETECT_OUTPUT && \
     --video "$VIDEO_FULLNAME" \
     --input "$EXPECT_CLASS_OUTPUT" \
     --config config/default.json \
+    --output-dir "$VIDEO_OUTPUTDIR" \
     --no-show-video --no-save-video
     deactivate
 fi
