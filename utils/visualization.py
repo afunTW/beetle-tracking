@@ -48,6 +48,7 @@ def main(args):
 
     with open(args.config, 'r') as f:
         config = json.load(f)['outputs']
+    mouse_contours = None
     if args.mouse_contours:
         with open(args.mouse_contours, 'r') as f:
             mouse_contours = json.load(f)
